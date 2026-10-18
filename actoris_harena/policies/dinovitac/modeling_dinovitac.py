@@ -144,15 +144,16 @@ class DinoViTacACT(ACT):
             self.dino.eval()
         self.vision_proj = nn.Linear(self.dino.config.hidden_size, d)
 
-        # "Untrained": random initialisation, and GroupNorm because a scratch
-        # network has no running statistics worth freezing.
-        resnet = torchvision.models.resnet18(
-            weights=None, norm_layer=lambda c: nn.GroupNorm(c // 16, c)
-        )
-        self.tactile_backbone = IntermediateLayerGetter(
-            resnet, return_layers={"layer4": "feature_map"}
-        )
-        self.tactile_proj = nn.Conv2d(resnet.fc.in_features, d, kernel_size=1)
+        if self.n_tactile:
+            # "Untrained": random initialisation, and GroupNorm because a scratch
+            # network has no running statistics worth freezing.
+            resnet = torchvision.models.resnet18(
+                weights=None, norm_layer=lambda c: nn.GroupNorm(c // 16, c)
+            )
+            self.tactile_backbone = IntermediateLayerGetter(
+                resnet, return_layers={"layer4": "feature_map"}
+            )
+            self.tactile_proj = nn.Conv2d(resnet.fc.in_features, d, kernel_size=1)
         # ACT gives every camera the same 2D position embedding; four fingertips
         # through one encoder would then be indistinguishable.
         self.camera_embed = nn.Embedding(len(self.image_keys), d)
@@ -163,7 +164,11 @@ class DinoViTacACT(ACT):
         forecast = config.tactile_forecast
         if forecast:
             self.fusion_forecast = CrossModalFusion(config, layers)
-        self.fusion_action = CrossModalFusion(config, layers)
+        # With no fingertips there is nothing to fuse: the vision tokens go on alone.
+        fusion_parts = []
+        if self.n_tactile:
+            self.fusion_action = CrossModalFusion(config, layers)
+            fusion_parts.append(self.fusion_action)
 
         if forecast:
             forecast_config = copy.copy(config)
@@ -194,9 +199,7 @@ class DinoViTacACT(ACT):
             if forecast
             else ()
         )
-        for p in chain(
-            *(m.parameters() for m in (*forecast_parts, self.fusion_action))
-        ):
+        for p in chain(*(m.parameters() for m in (*forecast_parts, *fusion_parts))):
             if p.dim() > 1:
                 nn.init.xavier_uniform_(p)
 
@@ -231,8 +234,11 @@ class DinoViTacACT(ACT):
 
     def observation_tokens(
         self, images: "list[Tensor]"
-    ) -> "tuple[Tensor, Tensor, Tensor, Tensor]":
-        """``(vision, vision_pos, touch, touch_pos)``, each sequence-first."""
+    ) -> "tuple[Tensor, Tensor, Tensor | None, Tensor | None]":
+        """``(vision, vision_pos, touch, touch_pos)``, each sequence-first.
+
+        The touch pair is None when the model reads no fingertip.
+        """
         images = [(img - self.pixel_mean) / self.pixel_std for img in images]
         vision, vision_pos, touch, touch_pos = [], [], [], []
         for camera, (img, tactile) in enumerate(zip(images, self.is_tactile)):
@@ -240,6 +246,8 @@ class DinoViTacACT(ACT):
                 tok, pos = self._cam_tokens(self._vision_features(img), camera)
                 vision.append(tok)
                 vision_pos.append(pos)
+        if not self.n_tactile:
+            return torch.cat(vision), torch.cat(vision_pos), None, None
         # The four fingertips go through their shared encoder as one batch.
         tactile_idx = [i for i, t in enumerate(self.is_tactile) if t]
         stacked = torch.cat([images[i] for i in tactile_idx])
@@ -402,7 +410,10 @@ class DinoViTacACT(ACT):
             touch_pos = torch.cat([touch_pos, future_pos])
 
         # The action pass.
-        fused, fused_pos = self.fusion_action(vision, touch, vision_pos, touch_pos)
+        if touch is None:
+            fused, fused_pos = vision, vision_pos
+        else:
+            fused, fused_pos = self.fusion_action(vision, touch, vision_pos, touch_pos)
         encoder_in_tokens = torch.cat([one_d_tokens, fused])
         encoder_in_pos_embed = torch.cat([one_d_pos, fused_pos])
         encoder_out = self.encoder(encoder_in_tokens, pos_embed=encoder_in_pos_embed)

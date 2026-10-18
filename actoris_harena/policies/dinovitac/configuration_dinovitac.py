@@ -101,10 +101,17 @@ class HarenaDinovitacConfig(HarenaActCropConfig):
         super().validate_features()
         names = [key.rsplit(".", 1)[-1] for key in self.image_features]
         cameras = set(self.tactile_cameras)
-        if not any(n in cameras for n in names) or all(n in cameras for n in names):
+        if all(n in cameras for n in names):
             raise ValueError(
-                "DinoViTacFormer needs at least one tactile and one non-tactile camera; "
+                "DinoViTacFormer needs a non-tactile camera for DINOv2; "
                 f"got {list(self.image_features)}"
+            )
+        # Without fingertips it is ACT on DINOv2 tokens, which is an ablation; a
+        # forecast of touch it does not read is not.
+        if self.tactile_forecast and not any(n in cameras for n in names):
+            raise ValueError(
+                "a tactile forecast needs a tactile camera; with none, set "
+                f"tactile_forecast=false (got {list(self.image_features)})"
             )
 
     @property

@@ -236,6 +236,50 @@ class AblationTest(unittest.TestCase):
         )
 
 
+class TouchFreeTest(unittest.TestCase):
+    def overhead_only(self, **overrides):
+        from lerobot.configs.types import FeatureType, PolicyFeature
+
+        config = make_config(**overrides)
+        config.input_features = {
+            STATE: PolicyFeature(type=FeatureType.STATE, shape=(12,)),
+            CENTRAL: PolicyFeature(type=FeatureType.VISUAL, shape=(3, 32, 32)),
+        }
+        return config
+
+    def test_a_forecast_of_touch_it_does_not_read_is_refused(self):
+        with self.assertRaises(ValueError):
+            self.overhead_only().validate_features()
+
+    def test_without_fingertips_it_trains_on_the_overhead_view_alone(self):
+        from actoris_harena.policies.dinovitac.modeling_dinovitac import (
+            HarenaDinovitacPolicy,
+        )
+
+        torch.manual_seed(0)
+        policy = HarenaDinovitacPolicy(
+            self.overhead_only(tactile_forecast=False, freeze_dino=False),
+            dino=tiny_dino(),
+        )
+        model = policy.model
+        for part in ("tactile_backbone", "fusion_action", "forecast_head"):
+            self.assertFalse(hasattr(model, part), part)
+        batch = {
+            STATE: torch.randn(2, 12),
+            CENTRAL: torch.rand(2, 3, 32, 32),
+            "action": torch.randn(2, 4, 12),
+            "action_is_pad": torch.zeros(2, 4, dtype=torch.bool),
+        }
+        policy.train()
+        loss, logged = policy.forward(batch)
+        self.assertEqual(set(logged), {"l1_loss", "kld_loss"})
+        loss.backward()
+        self.assertIsNotNone(model.vision_proj.weight.grad)
+        policy.reset()
+        action = policy.select_action({k: batch[k] for k in (STATE, CENTRAL)})
+        self.assertEqual(tuple(action.shape), (2, 12))
+
+
 class CurriculumTest(unittest.TestCase):
     def actions(self, policy, batch, step):
         policy.model.train_steps.fill_(step)
