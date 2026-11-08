@@ -189,8 +189,8 @@ class RegistrationTest(unittest.TestCase):
             self.assertEqual(port[key], twin[key], key)
 
     # The test that read this rig's shell driver and checked fastwam took its
-    # twin's branch moved to so101_garment with the driver: long_vla_real.sh is
-    # that repo's, and a test here cannot read a file that is not in this one.
+    # twin's branch moved to the rig with the driver: the driver script is the
+    # rig's, and a test here cannot read a file that is not in this repo.
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 """The layout rule, and the schema that gives it a width.
 
-so101_garment keeps the tests that assert ITS layout -- twelve channels, the
+Each rig keeps the tests that assert ITS layout -- twelve channels, the
 gripper fifth and eleventh, the EE keys LeRobot's classifier must ignore. What
 is tested here is the rule those follow from, on both shapes this package has to
 serve: two five-joint arms with a gripper each, and one six-joint arm with one.

@@ -33,7 +33,7 @@ def gripper_columns() -> "tuple[int, ...]":
         raise RuntimeError(
             "no gripper columns have been declared. A rig calls "
             "actoris_harena.action_layout.set_gripper_columns() once "
-            "(so101_garment does it in common/rig_profile.py), or a caller "
+            "(from its rig profile module, at import), or a caller "
             "passes columns= explicitly."
         )
     return _GRIPPER_COLUMNS

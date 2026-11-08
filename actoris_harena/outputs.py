@@ -8,9 +8,9 @@ rig's checkout, and became "wherever pip put this package" the moment it did
 not.
 
 So a rig declares its root, and everything here asks. ``$RIG_OUTPUT_DIR`` and
-the older ``$SO101_OUTPUT_DIR`` are both honoured, because so101_garment's
-setup.sh, its Slurm jobs and a dozen of its documents name the old one and a
-rename that silently moved a running rig's outputs would be a poor trade.
+the older ``$SO101_OUTPUT_DIR`` are both honoured, because existing setup
+scripts, Slurm jobs and documents name the old one and a rename that silently
+moved a running rig's outputs would be a poor trade.
 """
 
 import os

@@ -2,9 +2,8 @@
 
 Browsing, playing back and curating a recorded dataset needs no robot -- only
 the drive -- so the console does it itself, rather than through a rig's agent.
-This was the SO-101 console's alone (``so101_garment/src/common/web/
-datasets_api.py``), which is why the shared page's Datasets tab was empty: the
-routes it calls did not exist here.
+This was one rig's console's alone, which is why the shared page's Datasets
+tab was empty: the routes it calls did not exist here.
 
 What came across is the rig-neutral part: the list, the episode index, the
 recorded video files played as they are, depth frames, and the delete /

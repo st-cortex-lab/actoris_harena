@@ -45,8 +45,7 @@ os.environ["ACTORIS_HARENA_PATH"] = str(PACKAGE_ROOT)
 # A compatibility alias, not a second name to use. Seventeen sites here once read
 # the lowercase spelling against this uppercase setter (Linux environment names
 # are case-sensitive, so they raised KeyError); those now read the uppercase one,
-# but consumers' code still reads the lowercase -- the magpie datasets in
-# bimanual_garment_folding and learning_garment_manipulation among them.
+# but code written against the package still reads the lowercase spelling.
 os.environ["actoris_harena_PATH"] = str(PACKAGE_ROOT)
 os.environ["RAVENS_ASSETS_DIR"] = str(PACKAGE_ROOT / "arena/raven/environments/assets")
 os.environ["DEFORMABLE_RAVEN_ASSETS_DIR"] = str(

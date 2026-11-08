@@ -37,7 +37,7 @@ GOOD = {
     "box": {
         "ssh": "box",
         "kind": "ssh",
-        "repo": "~/project/so101_garment",
+        "repo": "~/project/rig",
         "scratch": "~/.cache/huggingface/lerobot",
         "stage": "{scratch}/local",
     }

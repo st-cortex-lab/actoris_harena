@@ -30,7 +30,7 @@ from actoris_harena.outputs import output_root
 # Point RIG_OUTPUT_DIR at a rig's outputs to run this against its real
 # checkpoints:
 #
-#     RIG_OUTPUT_DIR=~/Projects/so101_garment/outputs make test-integration
+#     RIG_OUTPUT_DIR=~/Projects/<rig>/outputs make test-integration
 #
 # Without that these tests SKIP, and a skip here is not a pass: this is the test
 # that makes "a checkpoint trained by either implementation loads into the other"

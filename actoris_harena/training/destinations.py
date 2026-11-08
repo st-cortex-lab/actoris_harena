@@ -67,7 +67,7 @@ def destinations_path() -> Path:
         raise RuntimeError(
             "no train_destinations.yaml has been declared. A rig calls "
             "actoris_harena.training.destinations.set_destinations_path() "
-            "once (so101_garment does it in common/rig_profile.py), or a "
+            "once (from its rig profile module, at import), or a "
             "caller passes an explicit path."
         )
     return _DESTINATIONS_PATH
@@ -347,7 +347,7 @@ def reachable(dest: "dict[str, Any]", timeout: float = REACH_TIMEOUT_S) -> "str 
         return (
             None
             if proc.returncode == 0
-            else f"no so101_garment checkout at {dest['repo']} on this machine"
+            else f"no rig checkout at {dest['repo']} on this machine"
         )
     return reach_message(
         proc.returncode, proc.stderr, str(dest.get("name", dest["ssh"]))

@@ -11,7 +11,7 @@ RealSense and an audio cue; what it puts in them -- which camera names, which
 device paths, which fps -- is that rig's, and lives in its own repo.
 
 The teleoperation half of this module (the shared IK parameters and the
-per-method ones) stayed in so101_garment: those schemas describe a two-handed
+per-method ones) stayed with the rig: those schemas describe a two-handed
 Quest mapping onto two five-joint arms, which is not a shared shape.
 """
 
@@ -43,7 +43,7 @@ def recording_config_path() -> Path:
         raise RuntimeError(
             "no recording.yaml has been declared. A rig calls "
             "actoris_harena.recording.config.set_recording_config_path() once "
-            "(so101_garment does it in common/rig_profile.py), or a caller "
+            "(from its rig profile module, at import), or a caller "
             "passes an explicit path."
         )
     return _RECORDING_PATH

@@ -11,7 +11,7 @@
 # interpreter that has `actoris_harena[rig]` installed, and the sensible one is
 # a rig's:
 #
-#     make test-unit PY=../so101_garment/venv/bin/python
+#     make test-unit PY=../<rig>/venv/bin/python
 #
 # With no PY given they look for a sibling rig's venv and use the first that can
 # import the package. If none can, they say so rather than failing with

@@ -1,6 +1,6 @@
 """The recording config schema: strict, and loud about why.
 
-so101_garment keeps its own test of the checked-in recording.yaml -- which
+Each rig keeps its own test of its checked-in recording.yaml -- which
 cameras it names, which have exposure pinned, which controls resolve. Those are
 facts about that bench. What is tested here is the SCHEMA those facts are
 checked against, with synthetic configs, because that is what this package owns

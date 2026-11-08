@@ -10,8 +10,8 @@
 #
 # So `files:` below names only the shared rig pipeline and its tests, which are
 # new code held to the same standard as the robot repos that import it
-# (so101_garment's .pre-commit-config.yaml is where these hook versions and
-# flake8 ignores come from -- keep them in step).
+# (their .pre-commit-config.yaml files use these same hook versions and
+# flake8 ignores -- keep them in step).
 #
 # Enable with:  pre-commit install
 files: '^(actoris_harena/(__init__\.py|recording/|training/|analysis/|policies/|deploy/|web/|rigs\.py|cli\.py|sync\.py|outputs\.py|action_layout\.py)|test/unit/|tool/check_wheel\.py)'
@@ -62,7 +62,7 @@ repos:
         args: ["--ignore-missing-imports", "--explicit-package-bases"]
         additional_dependencies: [types-PyYAML]
 
-  # The same gate as so101_garment and ur3e_raven: a commit runs the unit tier.
+  # The same gate as the robot repos: a commit runs the unit tier.
   # It is pure Python (no arm, no camera, no network) and takes ~30 s, through
   # whichever interpreter the Makefile finds -- see its check-python target.
   - repo: local

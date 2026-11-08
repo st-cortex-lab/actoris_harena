@@ -1,30 +1,23 @@
-"""Every name another repository imports from this package still exists.
+"""Every name the repositories built on this package import still exists.
 
-Seven repositories import ``actoris_harena`` and none of them pins it: each
-installs this checkout editable (``pip install -e``) at whatever branch is
-checked out, so a module moved or a name renamed here breaks them on their
-next run, with nothing in THIS repo's suite to say so. That has happened:
-``train_and_evaluate`` was renamed away while bimanual_garment_folding and
-JA-TN still called it.
+The robot and simulation repositories that use this package install it editable
+(``pip install -e``) at whatever branch is checked out, and none pins a
+version. So a module moved or a name renamed here breaks them on their next
+run, with nothing in THIS repo's suite to say so. That has happened:
+``train_and_evaluate`` was renamed away while callers still used it.
 
-``SURFACE`` below is what each consumer imports, taken by parsing their source
-(``from actoris_harena.x import y``, ``import actoris_harena.x``) plus the
-names they reach through an alias (``ag_ar.build_agent``). It is checked with
-``ast``, never by importing: half the surface is the sim stack (numpy<2,
-pybullet, gym), which cannot be installed in the rig venv this suite runs in,
-and an import would test the environment rather than the package.
+``SURFACE`` below is what those repositories import, taken by parsing their
+source (``from actoris_harena.x import y``, ``import actoris_harena.x``) plus the
+names they reach through an alias (``ag_ar.build_agent``). It is grouped by the
+half of the package it belongs to. It is checked with ``ast``, never by
+importing: the sim half (numpy<2, pybullet, gym) cannot be installed in the rig
+venv this suite runs in, and an import would test the environment rather than
+the package.
 
 A name is present when the module defines, assigns or imports it, re-exports
 it through ``from ... import *``, or it is a submodule -- and, for the package
-itself, when ``__init__._LAZY`` serves it. A failure names the consumer that
-breaks. If the change is deliberate, update that consumer first and then its
-row here; ``documents/compatibility.md`` says where each one lives.
-
-NOT listed, because they are not on develop yet: so101_garment's branches
-import ``analysis.features``, ``analysis.recordings`` and
-``analysis.perturb.{STATE_BASELINES,patch_occlusion}``, which live on this
-repo's ``dinovitac-ablations`` / ``tactile-crop-all-models`` branches. softgym
-imports ``agent.oracle.rect_fabric.real2sim_smoothing``, which exists nowhere.
+itself, when ``__init__._LAZY`` serves it. To change the surface on purpose,
+update the callers first (README.md, section 8, lists them), then this table.
 
 Run:  python -m unittest test.unit.test_consumer_surface
 """
@@ -38,12 +31,25 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[2]
 PACKAGE = "actoris_harena"
 
-# consumer -> module (relative to actoris_harena; "" is the package) -> names.
+# surface -> module (relative to actoris_harena; "" is the package) -> names.
 # An empty tuple means the module itself is imported.
 SURFACE: "dict[str, dict[str, tuple[str, ...]]]" = {
-    "so101_garment": {
+    "rig pipeline": {
         "action_layout": ("gripper_columns", "set_gripper_columns"),
-        "analysis": ("attention", "gradients", "phases", "report", "slides"),
+        "analysis": (
+            "attention",
+            "gradients",
+            "phases",
+            "recordings",
+            "report",
+            "slides",
+        ),
+        "analysis.features": (
+            "OVERHEAD_NAMES",
+            "encoder_kind",
+            "feature_groups",
+            "frame_features",
+        ),
         "analysis.diffusion": (
             "DEFAULT_SEED",
             "SEED_FIELDS",
@@ -55,9 +61,11 @@ SURFACE: "dict[str, dict[str, tuple[str, ...]]]" = {
         "analysis.paths": ("analysis_dir", "content_name"),
         "analysis.perturb": (
             "BASELINES",
+            "STATE_BASELINES",
             "baseline_frame",
             "chunk_delta",
             "occlusion",
+            "patch_occlusion",
             "ranking",
         ),
         "analysis.phases": ("spans_of",),
@@ -95,6 +103,7 @@ SURFACE: "dict[str, dict[str, tuple[str, ...]]]" = {
             "load_rows",
             "row_key",
         ),
+        "outputs": ("output_root",),
         "policies": (),
         "policies.act.modeling_act": ("HarenaActPolicy",),
         "policies.common.tactile": (
@@ -113,14 +122,14 @@ SURFACE: "dict[str, dict[str, tuple[str, ...]]]" = {
         ),
         "policies.loading": ("ensure_registered",),
         "recording": ("camera_profile", "features"),
-        "recording.audio_cue": ("AudioCue",),
+        "recording.audio_cue": ("AudioCue", "resolve_player"),
         "recording.camera_controls": (
             "CONTROL_NAMES",
             "EXPOSURE_AUTO",
             "apply_controls",
             "read_controls",
         ),
-        "recording.camera_profile": ("CameraProfile", "set_profile"),
+        "recording.camera_profile": ("CameraProfile", "profile", "set_profile"),
         "recording.cameras": ("CameraCapture",),
         "recording.collection_settings": (
             "SelectionError",
@@ -130,7 +139,11 @@ SURFACE: "dict[str, dict[str, tuple[str, ...]]]" = {
             "resolve_resume_selection",
             "selection_to_teleop_flags",
         ),
-        "recording.config": ("load_recording_config", "set_recording_config_path"),
+        "recording.config": (
+            "load_recording_config",
+            "recording_config_path",
+            "set_recording_config_path",
+        ),
         "recording.dataset_check": (
             "DatasetDamaged",
             "dataset_integrity",
@@ -171,7 +184,7 @@ SURFACE: "dict[str, dict[str, tuple[str, ...]]]" = {
             "split_selection",
             "view_slug",
         ),
-        "recording.depth": ("DepthWriter",),
+        "recording.depth": ("DepthWriter", "write_realsense_meta"),
         "recording.device_faults": ("bus_gone",),
         "recording.episode_recorder": ("EpisodeRecorder", "RecorderState"),
         "recording.features": (
@@ -186,7 +199,9 @@ SURFACE: "dict[str, dict[str, tuple[str, ...]]]" = {
             "build_observation_state",
             "pose_to_vec7",
         ),
+        "recording.frames": ("FrameStore", "TimedFrameStore"),
         "recording.monitor_server": (
+            "CollectionStatus",
             "DEFAULT_MAX_WIDTH",
             "DEFAULT_QUALITY",
             "DEFAULT_VIEW_FPS",
@@ -268,55 +283,11 @@ SURFACE: "dict[str, dict[str, tuple[str, ...]]]" = {
             "root_required",
             "unmount_own",
         ),
+        "web.session": ("teleop_argv",),
         "web.training_api": ("add_training_routes",),
         "web.util": ("in_executor", "preinit_tqdm_lock", "revalidate_assets"),
     },
-    "ur3e_raven": {
-        "": (),
-        "action_layout": ("gripper_columns", "set_gripper_columns"),
-        "agent.agent": ("Agent",),
-        "agent.bc.transporter.models.resnet": ("Name2ResNet", "ResNet43_8s"),
-        "agent.bc.transporter.models.transport": ("Transport",),
-        "agent.bc.transporter.transporter": ("OriginalTransporterAgent",),
-        "agent.bc.transporter.utils": ("utils",),
-        "agent.bc.transporter.utils.utils": ("apply_rotations_to_tensor",),
-        "agent.registration": ("AGENTS",),
-        "agent.trainable_agent": ("TrainableAgent",),
-        "arena.arena": ("Arena",),
-        "arena.registration": ("ARENAS",),
-        "outputs": ("output_root",),
-        "recording": ("features",),
-        "recording.audio_cue": ("AudioCue", "resolve_player"),
-        "recording.camera_profile": ("CameraProfile", "profile", "set_profile"),
-        "recording.collection_settings": ("selection_to_teleop_flags",),
-        "recording.config": (
-            "load_recording_config",
-            "recording_config_path",
-            "set_recording_config_path",
-        ),
-        "recording.depth": ("DepthWriter", "write_realsense_meta"),
-        "recording.episode_recorder": ("EpisodeRecorder", "RecorderState"),
-        "recording.features": ("RobotSchema", "build_dataset_features"),
-        "recording.frames": ("FrameStore", "TimedFrameStore"),
-        "recording.monitor_server": (
-            "CollectionStatus",
-            "MonitorServer",
-            "joint_snapshot",
-        ),
-        "recording.monitor_wire": (
-            "BOUNDARY",
-            "allowed_keys_for",
-            "encode_jpeg",
-            "mjpeg_part",
-        ),
-        "recording.realsense_camera": ("RealSenseCapture",),
-        "training.destinations": ("set_destinations_path",),
-        "utilities.transform.transporter_net_transformer": (
-            "TransporterNetTransformer",
-        ),
-        "web.session": ("teleop_argv",),
-    },
-    "bimanual_garment_folding": {
+    "sim API": {
         "": (
             "Agent",
             "Arena",
@@ -335,10 +306,18 @@ SURFACE: "dict[str, dict[str, tuple[str, ...]]]" = {
             "train_and_evaluate",
         ),
         "agent": ("MPC_CEM",),
+        "agent.agent": ("Agent",),
+        "agent.bc.transporter.models.resnet": ("Name2ResNet", "ResNet43_8s"),
+        "agent.bc.transporter.models.transport": ("Transport",),
+        "agent.bc.transporter.transporter": ("OriginalTransporterAgent",),
+        "agent.bc.transporter.utils": ("utils",),
+        "agent.bc.transporter.utils.utils": ("apply_rotations_to_tensor",),
         "agent.drl.sac.networks": ("Critic",),
         "agent.drl.sac.replay_buffer": ("ReplayBuffer",),
         "agent.drl.sac.vanilla_sac": ("Actor", "Critic", "VanillaSAC"),
         "agent.oracle.builder": ("OracleBuilder",),
+        "agent.registration": ("AGENTS",),
+        "agent.trainable_agent": ("TrainableAgent",),
         "agent.utilities.utils": (),
         "api": (
             "build_agent",
@@ -355,6 +334,9 @@ SURFACE: "dict[str, dict[str, tuple[str, ...]]]" = {
             "train_and_evaluate_single",
             "train_plural_eval_single",
         ),
+        "arena.arena": ("Arena",),
+        "arena.raven.tasks": ("cameras",),
+        "arena.registration": ("ARENAS",),
         "registration.dataset": (),
         "torch_utils": ("np_to_ts", "ts_to_np"),
         "utilities.logger.logger_interface": ("Logger",),
@@ -368,99 +350,12 @@ SURFACE: "dict[str, dict[str, tuple[str, ...]]]" = {
         "utilities.save_utils": ("save_colour", "save_depth", "save_mask"),
         "utilities.torch_utils": ("np_to_ts",),
         "utilities.trajectory_dataset": ("TrajectoryDataset",),
+        "utilities.transform.transporter_net_transformer": (
+            "TransporterNetTransformer",
+        ),
         "utilities.visual_utils": (
             "draw_pick_and_place",
             "plot_image_trajectory",
-            "plot_pick_and_place_trajectory",
-            "save_numpy_as_gif",
-            "save_video",
-        ),
-    },
-    "learning_garment_manipulation": {
-        "": (
-            "Agent",
-            "Arena",
-            "RLAgent",
-            "Task",
-            "TrainableAgent",
-            "TrajectoryDataset",
-            "build_agent",
-            "build_arena",
-            "evaluate",
-            "get_arena_class",
-            "register_agent",
-            "register_arena",
-            "retrieve_config",
-            "save_video",
-        ),
-        "agent": ("MPC_CEM",),
-        "agent.oracle.builder": ("OracleBuilder",),
-        "agent.utilities.utils": (),
-        "api": (
-            "build_agent",
-            "build_arena",
-            "build_transform",
-            "evaluate",
-            "get_arena_class",
-            "register_arena",
-            "retrieve_config",
-            "run",
-            "train_and_evaluate_single",
-            "train_plural_eval_single",
-        ),
-        "registration.dataset": (),
-        "torch_utils": ("np_to_ts", "ts_to_np"),
-        "utilities.logger.logger_interface": ("Logger",),
-        "utilities.networks.utils": ("np_to_ts", "ts_to_np"),
-        "utilities.perform_parallel": (
-            "setup_arenas",
-            "setup_arenas_with_class",
-            "step_arenas",
-        ),
-        "utilities.save_utils": ("save_mask",),
-        "utilities.torch_utils": ("np_to_ts",),
-        "utilities.trajectory_dataset": ("TrajectoryDataset",),
-        "utilities.visual_utils": (
-            "draw_pick_and_place",
-            "plot_image_trajectory",
-            "plot_pick_and_place_trajectory",
-            "save_numpy_as_gif",
-            "save_video",
-        ),
-    },
-    "JA-TN": {
-        "": (
-            "TrainableAgent",
-            "build_agent",
-            "build_arena",
-            "evaluate",
-            "register_agent",
-            "retrieve_config",
-            "train_and_evaluate",
-        ),
-        "api": ("build_agent", "build_transform"),
-        "arena.raven.tasks": ("cameras",),
-        "utilities.networks.utils": (),
-        "utilities.trajectory_dataset": ("TrajectoryDataset",),
-    },
-    "PlaNet-ClothPick": {
-        "": ("Arena", "RLAgent", "Task", "register_agent", "register_arena"),
-        "agent": ("MPC_CEM",),
-        "agent.oracle.builder": ("OracleBuilder",),
-        "agent.utilities.utils": (),
-        "api": (
-            "build_agent",
-            "build_arena",
-            "evaluate",
-            "train_and_evaluate_single",
-            "train_plural_eval_single",
-        ),
-        "registration.dataset": (),
-        "torch_utils": ("np_to_ts", "ts_to_np"),
-        "utilities.logger.logger_interface": ("Logger",),
-        "utilities.save_utils": ("save_mask",),
-        "utilities.visual_utils": (
-            "draw_pick_and_place",
             "plot_pick_and_place_trajectory",
             "save_numpy_as_gif",
             "save_video",
@@ -545,17 +440,17 @@ def names_in(module: str, _seen: "set[str] | None" = None) -> "set[str] | None":
 
 class TestEveryConsumerStillFindsWhatItImports(unittest.TestCase):
     def test_every_listed_module_and_name_exists(self) -> None:
-        for consumer, modules in SURFACE.items():
+        for surface, modules in SURFACE.items():
             for short, wanted in modules.items():
                 module = f"{PACKAGE}.{short}" if short else PACKAGE
-                with self.subTest(consumer=consumer, module=module):
+                with self.subTest(surface=surface, module=module):
                     found = names_in(module)
                     self.assertIsNotNone(
-                        found, f"{consumer} imports {module}, which is gone"
+                        found, f"the {surface} surface lists {module}, which is gone"
                     )
                     lost = sorted(set(wanted) - (found or set()))
                     self.assertEqual(
-                        lost, [], f"{consumer} imports these from {module}"
+                        lost, [], f"the {surface} surface lists these in {module}"
                     )
 
 
@@ -573,7 +468,7 @@ class TestTheCheckerCanFail(unittest.TestCase):
 
     def test_a_star_import_is_followed(self) -> None:
         # registration.dataset re-exports by `from ... import *` chains in the
-        # sim tree; PlaNet-ClothPick star-imports it.
+        # sim tree, and callers star-import it.
         self.assertTrue(names_in(f"{PACKAGE}.registration.dataset"))
 
 

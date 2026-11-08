@@ -94,7 +94,7 @@ confipython train_and_evaluate.py \
 
 Testing
 
-## PlaNet-ClothPick, RGB2RGB, on Fabric Flattening
+## The `planet-clothpick` agent, RGB2RGB, on Fabric Flattening
 
 ```
 confipython train_and_evaluate.py \

@@ -27,6 +27,7 @@ run control algorithms on simulated benchmarks.
 6. [Tests and lint](#6-tests-and-lint)
 7. [Where things are](#7-where-things-are)
 8. [Compatibility with the repositories that use it](#8-compatibility-with-the-repositories-that-use-it)
+9. [Where the rig pipeline came from](#9-where-the-rig-pipeline-came-from)
 
 ---
 
@@ -154,15 +155,101 @@ test/unit/ test/integration/                                the rig pipeline's t
 test/sim/                                                   hand-run sim checks
 tool/                                                       scripts (mostly sim)
 conf/                                                       Hydra configs for tool/hydra_*.py
-documents/                                                  provenance, compatibility, sim notes
+documents/                                                  sim notes, the retired npz pipeline
 ```
 
 `CLAUDE.md` is the detailed, file-by-file guide.
 
 ## 8. Compatibility with the repositories that use it
 
-Seven repositories import this package, and none of them pins a version.
-`documents/compatibility.md` lists each one, how it installs the package and
-what it imports. `test/unit/test_consumer_surface.py` fails, naming the
-consumer, if any of those imports stops resolving. Moving or renaming a module
-therefore starts in the consumer.
+These repositories build on this package. **None of them pins it.** Each one
+installs a sibling `../actoris_harena` checkout in editable mode, so whatever
+branch is checked out here is what they run.
+
+| Repository | Side | How it installs this package | What it imports |
+|---|---|---|---|
+| [`so101_garment`](https://github.com/st-cortex-lab/so101_garment) | rig | `hpc/provision_create.sh`: `pip install -e "../actoris_harena[rig]"` | `recording.*`, `training.*`, `analysis.*`, `deploy.*`, `policies.*` (and the `harena_*`/`so101_*` registry names), `web.*`, `sync`, `action_layout` |
+| [`ur3e_raven`](https://github.com/st-cortex-lab/ur3e_raven) | rig + sim | `install.sh`/`install.ps1` from `install.env` (`HARENA_BRANCH=develop`, `[rig]`) | `recording.*`, `training.destinations`, `web.session`, `outputs`, `action_layout`; the Ravens/Transporter code in `agent.bc.transporter.*`, `agent.*`, `arena.*`, `utilities.transform`; and `import actoris_harena` for the `RAVENS_ASSETS_DIR` it sets |
+| `bimanual_garment_folding` | sim | `pip install -e ".[torch]"` on `develop` | the top-level names, `api.*` (incl. `train_and_evaluate`), `utilities.*`, `torch_utils`, `agent.{MPC_CEM,utilities.utils,oracle.builder,drl.sac.*}`, `registration.dataset`; it reads `actoris_harena_PATH` |
+| `learning_garment_manipulation` | sim | Dockerfile: `uv pip install -e ".[torch]"` on `develop` | a subset of the above |
+| [`JA-TN`](https://github.com/st-cortex-lab/JA-TN) | sim | `develop`, then `source env_setup.sh` | `TrainableAgent`, `retrieve_config(config_dir=…)`, `build_*`, `evaluate`, `train_and_evaluate`, `utilities.{trajectory_dataset,networks.utils}`, `arena.raven.tasks` |
+| [`PlaNet-ClothPick`](https://github.com/st-cortex-lab/PlaNet-ClothPick) | sim | `pip install -e ".[torch]"` on `develop` | `Arena`, `Task`, `RLAgent`, `api.*`, `torch_utils`, `registration.dataset`, `agent.*`, `utilities.*` |
+| [`softgym`](https://github.com/st-cortex-lab/softgym) | sim | none (a lazy import) | `agent.oracle.rect_fabric.real2sim_smoothing` |
+
+`LaGarNet` and `DRAPER` still use the old `agent_arena` package
+(`agent-arena-v0`) and do not import this one.
+
+`test/unit/test_consumer_surface.py` lists every `(module, name)` these
+repositories import. It fails if any of them stops resolving. **To move or
+rename something, update the callers first, then that table.** It cannot check
+these other promises:
+
+- **Install names:** the `[rig]`, `[sim]`, `[torch]` and `[realsense]` extras,
+  and the `actoris-harena` script.
+- **Environment:** `import actoris_harena` sets `ACTORIS_HARENA_PATH`,
+  `RAVENS_ASSETS_DIR` and `DEFORMABLE_RAVEN_ASSETS_DIR`, plus the lowercase alias
+  `actoris_harena_PATH` that callers' code reads.
+- **Configs:** `retrieve_config(agent, arena, name)` resolves
+  `configuration/train_and_evaluate/<agent>/<arena>/<name>.yaml`. Here `<arena>`
+  is a spec string such as `softgym|domain:…`, which is why about 240 config
+  files have `|`, `:` and `()` in their names and cannot be renamed.
+- **Behaviour:**
+  - `build_agent` with `config.oracle=True` goes to `OracleBuilder`.
+  - `train_and_evaluate(agent, arena, validation_interval, total_update_steps,
+    eval_checkpoint)` takes a checkpoint as its fifth argument;
+    `train_and_evaluate_single` takes a flag there instead.
+- **Rig declaration:** the `set_*` hooks a rig's profile module calls, and the
+  `rig.yaml` keys the console reads.
+- **Legacy identifiers:** checkpoints and launch scripts carry them, so they
+  stay:
+  - the `so101_*` policy and processor names;
+  - the `so101-metric` log line;
+  - `$SO101_OUTPUT_DIR`, and the `so101_outputs` / `so101_manifests` scratch
+    directories.
+
+**Known gaps:**
+
+- softgym imports `agent.oracle.rect_fabric.real2sim_smoothing`, which exists
+  on no branch.
+- bimanual_garment_folding and learning_garment_manipulation still import
+  `agent_arena.api` in `real_robot/test/test_human_policy_folding.py`.
+
+**Not done yet, deliberately.** Each item moves modules, so each needs a shim at
+every path above:
+
+- merging the duplicate sim loggers, `torch_utils`, registries and datasets;
+- the 49 sim directories without an `__init__.py`;
+- the ~12.5 MB of Raven assets duplicated between `arena/raven` and
+  `arena/deformable_raven`;
+- renaming files with typos or CamelCase names;
+- a `src/` layout.
+
+## 9. Where the rig pipeline came from
+
+The rig pipeline was written in `so101_garment` and moved here so a second
+robot could use it without forking it. It was **copied**, not grafted with
+`git subtree` or `git filter-repo`. Grafting would have rewritten this
+repository's history and pulled ~64k lines of unrelated simulation commits into
+every future `git log`.
+
+`so101_garment` still holds the per-line history. Most of the measured claims in
+this repo's `CLAUDE.md` cite commits there. To read a file's history, find its
+former path under `src/common/` in that repository and run `git log --follow`
+on it there.
+
+| Area | Moved in | From `so101_garment` at |
+|---|---|---|
+| `sync.py`, `deploy/{chunking,chunk_metrics,chunk_sweep,sweep_journal}.py`, `recording/{camera_controls,device_faults}.py` | stage 3a | `83f56db` |
+| `deploy/{policy_run,policy_wire,policy_client,policy_log,policy_rig}.py` | stage 3b | `0fd77dd` |
+| `recording/{depth,drift,usb_topology,fault_report,audio_cue,dataset_check,dataset_edit,dataset_read,collection_settings}.py` + `recording/sounds/` | stage 3c | `6719bec` |
+| `web/{roots,util,jobs,lifecycle,projects}.py` | stage 3d | `878d8ee` |
+| `recording/{dataset_view,camera_profile}.py` | stage 3e | `0080538` |
+| `training/{destinations,matrix,metrics,progress,runs}.py` | stage 3f | `ec49dda` |
+| `analysis/*`, `outputs.py`, `action_layout.py` | stage 3g | `3d04f70` |
+| `recording/{cameras,realsense_camera,frames}.py` | stage 3h | `657706b` |
+| `recording/config.py` | stage 3i | `b522983` |
+| `recording/features.py` | stage 3j | `cc2b669` |
+| `web/{roots_api,lifecycle_api,projects_api,training_api}.py`, `recording/monitor_wire.py` | stage 4 | `0c544e0` |
+| `recording/episode_recorder.py` | stage 3m | `a532cf8` |
+| `policies/*`, `tool/port_policies.py`, `tool/measure_tactile_border.py` | stage 5 | `d22de3a` |
+| `rigs.py`, `cli.py`, `web/console.py` | stage 4 | new here |

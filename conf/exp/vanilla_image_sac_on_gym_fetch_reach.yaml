@@ -4,6 +4,6 @@ defaults:
   - /arena@arena: gym_fetch_reach
 
 exp_name: vanilla_image_sac_on_gym_fetch_reach
-project_name: bimanual_garment_folding
+project_name: actoris_harena
 save_root: ./tmp/sac_results
 train_and_eval: train_and_evaluate_single

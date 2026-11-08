@@ -281,7 +281,7 @@ THANOS = {
     "name": "thanos",
     "ssh": "thanos",
     "kind": "ssh",
-    "repo": "~/project/so101_garment",
+    "repo": "~/project/rig",
     "scratch": "~/.cache/huggingface/lerobot",
     "stage": "{scratch}/local",
     "limits": {},
@@ -303,7 +303,7 @@ class TestWhereTheLogIs(unittest.TestCase):
             runs.out_roots(LOCAL),
             [
                 "~/.cache/huggingface/lerobot/so101_outputs",
-                "~/project/so101_garment/outputs",
+                "~/project/rig/outputs",
             ],
         )
 
@@ -353,7 +353,7 @@ class TestTheCommands(unittest.TestCase):
         self.assertIn(
             "~/.cache/huggingface/lerobot/so101_outputs/vla_real_long", command
         )
-        self.assertIn("~/project/so101_garment/outputs/vla_real_long", command)
+        self.assertIn("~/project/rig/outputs/vla_real_long", command)
 
 
 class TestReadingTheAnswers(unittest.TestCase):

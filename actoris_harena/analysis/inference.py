@@ -121,8 +121,7 @@ class Inference:
         if load_policy is None or build_batch is None:
             raise TypeError(
                 "Inference needs load_policy= and build_batch=: the rig's own "
-                "checkpoint loader and batch assembler. so101_garment passes "
-                "tool/eval_sim_policy.py's pair."
+                "checkpoint loader and batch assembler."
             )
 
         self.torch = torch

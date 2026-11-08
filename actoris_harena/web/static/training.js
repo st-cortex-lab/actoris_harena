@@ -47,8 +47,8 @@ function renderPolicies(policies) {
   const groups = [
     ['LeRobot', policies.filter(p => !p.local),
      'the installed LeRobot’s own implementations'],
-    ['This repo', policies.filter(p => p.local),
-     'src/so101_policies/ — trained by the same lerobot-train, through '
+    ['actoris_harena', policies.filter(p => p.local),
+     'actoris_harena.policies — trained by the same lerobot-train, through '
      + '--policy.discover_packages_path'],
   ];
   for (const [title, group, note] of groups) {

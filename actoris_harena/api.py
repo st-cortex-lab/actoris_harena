@@ -530,7 +530,7 @@ def train_and_evaluate(
 
     9227768 renamed this to `train_and_evaluate_single` and later gave that
     function a different fifth parameter (`eval_last_check`), so it cannot be
-    an alias: bimanual_garment_folding and JA-TN pass `eval_checkpoint`
+    an alias: callers pass `eval_checkpoint`
     positionally, and an int there would silently mean "evaluate the last
     checkpoint". This is the original body: train with periodic validation,
     keep the best, then evaluate at `eval_checkpoint` -- training stops there

@@ -1,9 +1,9 @@
 """``actoris-harena`` -- the shared console, and the list of rigs it can drive.
 
     actoris-harena rigs list
-    actoris-harena rigs add ~/Projects/so101_garment
-    actoris-harena rigs remove so101
-    actoris-harena console --dir /media/hdd/so101 --port 8000
+    actoris-harena rigs add ~/Projects/<rig>
+    actoris-harena rigs remove <name>
+    actoris-harena console --dir /media/hdd/<collection> --port 8000
 
 The console serves the parts of the pipeline that are the same on every robot --
 the collection drive, the episode browser, the training tab -- in its own

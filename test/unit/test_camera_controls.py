@@ -4,9 +4,9 @@ The ordering requirement here is invisible in the code: an exposure value set
 while the camera is still choosing its own is simply ignored, so automatic mode
 has to be switched off first.
 
-The other half of the original test -- the tuner's YAML round-trip -- stays in
-so101_garment, because tool/tune_cameras.py is a per-rig tool and not part of
-this package.
+The other half of the original test -- the tuner's YAML round-trip -- stays
+with the rig, because the camera tuner is a per-rig tool and not part of this
+package.
 
 Run:  python -m unittest test.unit.test_camera_controls
 """
