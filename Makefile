@@ -32,7 +32,7 @@ _PROBE := import numpy, aiohttp, cv2, yaml, actoris_harena
 PYTHON := $(firstword $(foreach p,$(CANDIDATES),\
     $(shell $(p) -c "$(_PROBE)" >/dev/null 2>&1 && echo $(p))))
 
-.PHONY: test test-unit test-integration lint check-python
+.PHONY: test test-unit test-integration lint check-python check-wheel
 
 check-python:
 	@if [ -z "$(PYTHON)" ]; then \
@@ -65,3 +65,13 @@ test-integration: check-python
 # the same interpreter, since pre-commit is installed in a rig's venv too.
 lint: check-python
 	@$(PYTHON) -m pre_commit run --all-files
+
+# Every install of this package is editable, which reads data files straight
+# from the checkout and so hides one missing from package-data. This builds a
+# REAL wheel and fails unless every tracked file of each data directory is in
+# it (tool/check_wheel.py). --no-build-isolation: a rig venv already has
+# setuptools, and a compute node may have no index to fetch one from.
+check-wheel: check-python
+	@rm -rf build/wheel
+	@$(PYTHON) -m pip wheel . --no-deps --no-build-isolation -q -w build/wheel
+	@$(PYTHON) tool/check_wheel.py build/wheel

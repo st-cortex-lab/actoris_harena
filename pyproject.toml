@@ -151,6 +151,10 @@ sim = [
     "openai; python_version >= '3.10'"
 ]
 
+# The sim consumers' install: bimanual_garment_folding, learning_garment_
+# manipulation, JA-TN and PlaNet-ClothPick all document `pip install -e
+# ".[torch]"`, and learning_garment_manipulation's Dockerfile runs it. Keep the
+# name -- see documents/compatibility.md.
 torch = [
     # Torch for Python < 3.10
     "torch>=2.0.0; python_version < '3.10'",
@@ -198,3 +202,16 @@ include = ["actoris_harena*"]
 # have to ship with it -- a wheel without them makes resolve_sound() return
 # None and the recorder go silent, with nothing raising to say why.
 "actoris_harena.recording" = ["sounds/*.wav"]
+# The console serves its page from beside web/console.py; a wheel without these
+# starts a server that answers every request with 404.
+"actoris_harena.web" = ["static/*"]
+# The sim side reads its default configs (api.retrieve_config) and the Ravens
+# URDF/mesh assets (RAVENS_ASSETS_DIR, set by __init__) from inside the package.
+# Those directories hold no Python, so nothing but this line ships them.
+# `make check-wheel` builds a real wheel and fails if any of the four is absent:
+# every install here is editable, which is exactly what hides a missing one.
+"actoris_harena" = [
+    "configuration/**/*.yaml",
+    "arena/raven/environments/assets/**/*",
+    "arena/deformable_raven/src/assets/**/*",
+]
