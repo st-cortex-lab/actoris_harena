@@ -1,34 +1,41 @@
+# --- Python and tool caches -------------------------------------------------
 __pycache__
 */__pycache__
-*.hdf5
-*.zip
+.mypy_cache/
+.pytest_cache/
+actoris_harena.egg-info
+build
+.DS_Store
+
+# --- Run outputs, never source ---------------------------------------------
 # Anchored. A bare `data` matched EVERY directory of that name at any depth,
 # which silently untracked the whole of actoris_harena/data/ -- and
 # origin/dataset imports it, so a fresh clone of that branch cannot `import
 # actoris_harena`. Only a run-output directory at the repo root is meant here.
 /data
+outputs
+results
+runs
+ray_results/
+test_results
 wandb
-*.pth
+nohup.out
 tmp
-develope
-*.mp4
 */tmp/*
+develope
 goals
-*.npy
 */goals/*
 dataset
-test_results
-build
-.catkin_workspace
-devel
-CMakelists.txt
-package.xml
+
+# --- Large binaries ---------------------------------------------------------
+*.hdf5
+*.zip
 *.pth
-nohup.out
-runs
 *.ckpt
+*.npy
+*.mp4
+
+# Run logs are .txt. A requirements file is source, and arena/raven's README
+# tells people to `pip install -r requirements.txt`, so it is re-included.
 *.txt
-actoris_harena.egg-info
-results
-build
-outputs
+!requirements*.txt
