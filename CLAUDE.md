@@ -53,7 +53,13 @@ SUBPROCESS to catch it.
   because a rig's venv is what pins its LeRobot checkout and its hardware
   libraries. `make test-unit` finds a sibling rig's venv, takes `PY=<path>`, or
   refuses with the two commands that fix it.
-- `make test-unit` / `make test-integration` / `make lint`.
+- `make test-unit` / `make test-integration` / `make lint` / `make check-wheel`.
+  `lint` runs `test-unit` as its last hook, as in both rigs. `check-wheel` builds
+  a REAL wheel and fails unless every tracked file of each data directory is in
+  it (`tool/check_wheel.py`). Every install here is editable, so a gap in
+  `package-data` is otherwise invisible.
+- The sim side needs `[sim]` (conda env `actoris-harena`, `source env_setup.sh`).
+  Its checks are the hand-run `test/sim/check_*.py`, which nothing collects.
 - **The integration tier's checkpoint test SKIPS without a rig's outputs**, and a
   skip there is not a pass — it is the test that makes "a checkpoint trained by
   either implementation loads into the other" checkable:
@@ -95,6 +101,15 @@ SUBPROCESS to catch it.
   declares. Each refuses until it is told.
 - `provenance.md` in `documents/` — where each area came from, and why these are
   copies rather than a `git subtree` graft.
+- `documents/compatibility.md` + `test/unit/test_consumer_surface.py` — the
+  seven repos that import this package unpinned, and every name they import.
+  The test reads the table with `ast`, never by importing, because half of it is
+  the sim stack. **A move or rename here starts in the consumer**, then its row.
+  `documents/sim/` holds the old sim run notes (Ravens/Transporter, JA-TN,
+  PlaNet-ClothPick, the old checklist).
+- Paths written `../so101_garment/…` below are tools and runbooks that drive this
+  package but live in that rig. This repo's `tool/` holds `port_policies.py`,
+  `measure_tactile_border.py`, `check_wheel.py` and the sim scripts.
 
 - `recording/dataset_check.py` — is a dataset whole? The counted
   episodes against the ones in `meta/episodes/`, `data/` and `extra/`, the
@@ -117,10 +132,10 @@ SUBPROCESS to catch it.
   never includes a composite, and a composite is the one thing a view cannot
   symlink — it decodes its parts in lockstep and encodes one video with PyAV
   (not the ffmpeg CLI: a compute node has neither). Built by
-  `tool/make_camera_view.py`; the cluster job builds one per `cameras` row.
+  `../so101_garment/tool/make_camera_view.py`; the cluster job builds one per `cameras` row.
 - `training/` — where a training run may be sent, whether it can
   work there, and how it is going. `destinations.py` (pure:
-  `src/conf/train_destinations.yaml` validated, the ssh/rsync argv, and what an
+  `../so101_garment/src/conf/train_destinations.yaml` validated, the ssh/rsync argv, and what an
   unreachable machine should be told — its paths reach the REMOTE shell
   unquoted so `~`/`$USER` mean the remote home and user, which is why what may
   appear in them is checked at load; `kind: local` is the machine the console
@@ -131,7 +146,7 @@ SUBPROCESS to catch it.
   the dataset lacks, more cameras than the policy has slots, a batch over a
   MEASURED ceiling, a policy this LeRobot has never heard of, and a run that
   would fall back to the CPU) + `progress.py`/`runs.py` (below). Two front
-  ends: `tool/train_launch.py` and the console's Training tab, so a run started
+  ends: `../so101_garment/tool/train_launch.py` and the console's Training tab, so a run started
   in the browser is the same run. A `-` in the steps/batch column means
   "whatever fits here" and takes the destination's measured ceiling; an
   explicit number is refused if it is over.
@@ -177,7 +192,7 @@ SUBPROCESS to catch it.
   training axis would report a measurement nobody made.
 - `analysis/` — **what each input stream contributes to the actions a
   policy plans**, kept OUT of the inference path (nothing there imports it back)
-  and driven by `tool/analyse_policy_inputs.py`. It rests on one verified fact:
+  and driven by `../so101_garment/tool/analyse_policy_inputs.py`. It rests on one verified fact:
   both policies reduce their inputs to a vector in which each stream owns a
   CONTIGUOUS piece — ACT's encoder tokens are `[latent, state, cam x H*W, ...]`
   in `config.image_features` order (300 tokens a camera at 480x640, 1 502 in
@@ -203,7 +218,7 @@ SUBPROCESS to catch it.
   (0.87 worst) though the shares converge by then. `--sanity` is Adebayo et
   al.'s model-randomisation test, which this checkpoint passes outright (a
   randomised policy plans the same chunk whatever it is shown, so every share
-  falls to zero). `slides.py` + `tool/analysis_slides.py` turn a finished run
+  falls to zero). `slides.py` + `../so101_garment/tool/analysis_slides.py` turn a finished run
   into slide-ready videos (PyAV/H.264, no ffmpeg binary), plots and tables.
   `paths.py` is the ONE place an analysis decides where it is written
   (`outputs/analysis/<day>/<policy>-<cameras>/`). Not every method exists for
@@ -215,7 +230,7 @@ SUBPROCESS to catch it.
   again on the inner `sample_actions`), so a gradient needs both off. Occlusion
   is pinned through `perturb.plan_of`: it was not, for a while, which made it
   the one method measuring the sampler while being the ground truth everything
-  else is scored against. Runbook: `documents/policy_input_analysis.md`.
+  else is scored against. Runbook: `../so101_garment/documents/policy_input_analysis.md`.
 - `policies/` — every policy this rig trains, implemented HERE rather
   than in LeRobot. Importing the package registers each one with LeRobot's
   draccus registry, which is the whole mechanism: `lerobot.configs.parser.wrap`
@@ -254,7 +269,7 @@ SUBPROCESS to catch it.
   FastWAM pulls a 5B Wan video backbone plus a umt5-xxl text encoder, far larger
   than anything else in the matrix, and may not fit the 24.5 GiB box at any
   batch. `loading.py` registers the package for any loader
-  (`eval_sim_policy.load_policy` calls it), and `tool/retarget_checkpoint.py`
+  (`eval_sim_policy.load_policy` calls it), and `../so101_garment/tool/retarget_checkpoint.py`
   reads a checkpoint through the other member of a ported pair by symlinking its
   weights and rewriting one field — which is how a repo-local pi0.5 gets a base
   to finetune, since `lerobot/pi05_base` says `pi05` and would otherwise quietly
@@ -292,8 +307,8 @@ SUBPROCESS to catch it.
   so it tests the paper's CLAIMS, not its numbers. A chunk's frames and actions
   must span the same interval; `frame_stride` subsamples to make that true and a
   `chunk_size` that will not divide is refused. The frozen VAE is fetched from
-  the Hub and kept OUT of the checkpoint. See `documents/policy_package.md` and
-  `documents/world_action_model.md`.
+  the Hub and kept OUT of the checkpoint. See `../so101_garment/documents/policy_package.md` and
+  `../so101_garment/documents/world_action_model.md`.
 
 ## Conventions
 

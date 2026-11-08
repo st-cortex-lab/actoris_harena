@@ -14,11 +14,11 @@ LeRobot then derives the rest of the wiring from the config class NAME, purely
 mechanically (``policies/factory.py:606``), so the naming is a contract and not
 a style:
 
-    actoris_harena.policies/<x>/configuration_<x>.py   So101<X>Config, registered "so101_<x>"
-    actoris_harena.policies/<x>/modeling_<x>.py        So101<X>Policy
+    actoris_harena.policies/<x>/configuration_<x>.py   Harena<X>Config, registered "harena_<x>"
+    actoris_harena.policies/<x>/modeling_<x>.py        Harena<X>Policy
     actoris_harena.policies/<x>/processor_<x>.py       make_harena_<x>_pre_post_processors
 
-Three of these -- act, diffusion, pi05 -- are PORTS: the upstream module tree
+Four of these -- act, diffusion, pi05, fastwam -- are PORTS: the upstream module tree
 moved here unchanged, so their ``state_dict`` keys are identical to LeRobot's
 and every checkpoint already trained still loads. ``test/unit/test_policy_ports.py``
 holds them to that. The rest are ours.
