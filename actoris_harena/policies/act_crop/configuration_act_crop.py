@@ -19,7 +19,7 @@ from dataclasses import dataclass, field
 from lerobot.configs import PreTrainedConfig
 
 from ..act.configuration_act import HarenaActConfig
-from ..common.tactile import DEFAULT_CROP, TACTILE_CAMERAS
+from ..common.tactile import CENTRED, DEFAULT_CROP, TACTILE_CAMERAS
 
 
 @PreTrainedConfig.register_subclass("harena_act_crop")
@@ -34,6 +34,9 @@ class HarenaActCropConfig(HarenaActConfig):
     #: bright rim and the responsive columns are the same pixels -- see
     #: `common/tactile.DEFAULT_CROP` for the per-camera numbers.
     tactile_crop: tuple[float, float] = DEFAULT_CROP
+    #: Centre of the kept box as a (row, column) fraction of the image;
+    #: (0.5, 0.5) is centred, as every crop before the ridge crop was.
+    tactile_crop_centre: tuple[float, float] = CENTRED
 
     #: Which cameras are tactile. No camera carries a `tactile` flag anywhere
     #: in this repo, so the set is named rather than inferred.
@@ -44,6 +47,13 @@ class HarenaActCropConfig(HarenaActConfig):
     #: resizing applies -- the confound every cropping result in this work
     #: currently carries.
     tactile_resize: bool = True
+    #: Give the tactile cameras their own ResNet, shared among them, instead of
+    #: the one ACT passes every camera through. The overhead camera keeps the
+    #: twin's. Both start from the same pretrained weights, so the only change
+    #: is that a gel image no longer competes with a room view for one encoder.
+    #: False reproduces every checkpoint trained before the field existed. With
+    #: ``tactile_crop=[1.0,1.0]`` (no crop) it is the split-encoder ablation.
+    separate_tactile_backbone: bool = False
 
 
 # Registered under its former name as well, so a checkpoint written before this

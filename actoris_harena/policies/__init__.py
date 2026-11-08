@@ -38,12 +38,28 @@ from actoris_harena.policies.diffusion_crop.configuration_diffusion_crop import 
 from actoris_harena.policies.diffusion_crop.modeling_diffusion_crop import (
     HarenaDiffusionCropPolicy,
 )
+from actoris_harena.policies.dinovitac.configuration_dinovitac import (
+    HarenaDinovitacConfig,
+)
+from actoris_harena.policies.dinovitac.modeling_dinovitac import HarenaDinovitacPolicy
 from actoris_harena.policies.dreamzero.configuration_dreamzero import (
     HarenaDreamzeroConfig,
 )
 from actoris_harena.policies.dreamzero.modeling_dreamzero import HarenaDreamzeroPolicy
+from actoris_harena.policies.dreamzero_crop.configuration_dreamzero_crop import (
+    HarenaDreamzeroCropConfig,
+)
+from actoris_harena.policies.dreamzero_crop.modeling_dreamzero_crop import (
+    HarenaDreamzeroCropPolicy,
+)
 from actoris_harena.policies.fastwam.configuration_fastwam import HarenaFastwamConfig
 from actoris_harena.policies.fastwam.modeling_fastwam import HarenaFastwamPolicy
+from actoris_harena.policies.fastwam_crop.configuration_fastwam_crop import (
+    HarenaFastwamCropConfig,
+)
+from actoris_harena.policies.fastwam_crop.modeling_fastwam_crop import (
+    HarenaFastwamCropPolicy,
+)
 from actoris_harena.policies.fastwam_predict.configuration_fastwam_predict import (
     HarenaFastwamPredictConfig,
 )
@@ -84,9 +100,15 @@ __all__ = [
     "HarenaDiffusionCropConfig",
     "HarenaDiffusionCropPolicy",
     "HarenaDiffusionPolicy",
+    "HarenaDinovitacConfig",
+    "HarenaDinovitacPolicy",
     "HarenaDreamzeroConfig",
+    "HarenaDreamzeroCropConfig",
+    "HarenaDreamzeroCropPolicy",
     "HarenaDreamzeroPolicy",
     "HarenaFastwamConfig",
+    "HarenaFastwamCropConfig",
+    "HarenaFastwamCropPolicy",
     "HarenaFastwamPolicy",
     "HarenaFastwamPredictConfig",
     "HarenaFastwamPredictPolicy",

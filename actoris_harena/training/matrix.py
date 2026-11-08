@@ -148,6 +148,8 @@ for _crop, _twin in (
     ("harena_act_crop", "harena_act"),
     ("harena_diffusion_crop", "harena_diffusion"),
     ("harena_pi05_crop", "harena_pi05"),
+    ("harena_dreamzero_crop", "harena_dreamzero"),
+    ("harena_fastwam_crop", "harena_fastwam"),
 ):
     POLICIES[_crop] = {
         **POLICIES[_twin],
@@ -174,6 +176,17 @@ POLICIES["harena_fastwam_predict"] = {
     # demand a byte-identical upstream file that does not exist.
     "ported_from": None,
     "module": "actoris_harena.policies.fastwam_predict",
+}
+
+# DinoViTacFormer: ACT's CVAE reading a frozen DINOv2 (overhead) and a scratch
+# ResNet (fingertips), fused by ViTacFormer's bidirectional cross-attention, with
+# a tactile forecast. ACT's budget, so it compares with ACT; NOT a variant of it,
+# because its memory is not ACT's and a measured ceiling must not carry over.
+POLICIES["harena_dinovitac"] = {
+    **POLICIES["act"],
+    "local": True,
+    "ported_from": None,
+    "module": "actoris_harena.policies.dinovitac",
 }
 
 POLICY_NAMES = tuple(POLICIES)

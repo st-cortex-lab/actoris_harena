@@ -24,6 +24,7 @@ from actoris_harena.policies.common.tactile import (
     crop_and_restore,
     crop_box,
     crop_only,
+    crop_tiles_and_restore,
 )
 
 
@@ -57,6 +58,48 @@ class CropGeometryTest(unittest.TestCase):
         # modules away with nothing naming the cause.
         _, _, h, w = crop_box(10, 10, 0.01)
         self.assertGreaterEqual(min(h, w), 1)
+
+
+class OffCentreBoxTest(unittest.TestCase):
+    """The ridge crop: a box to the right of the gel's vertical ridge."""
+
+    def test_centred_is_exactly_the_old_arithmetic(self):
+        self.assertEqual(
+            crop_box(480, 640, (0.8, 0.8), (0.5, 0.5)), crop_box(480, 640, (0.8, 0.8))
+        )
+
+    def test_the_ridge_crop_keeps_columns_036_to_090(self):
+        top, left, h, w = crop_box(480, 640, (0.8, 0.54), (0.5, 0.63))
+        self.assertEqual((top, h), (48, 384))
+        self.assertAlmostEqual(left / 640, 0.36, places=2)
+        self.assertAlmostEqual((left + w) / 640, 0.90, places=2)
+
+    def test_a_box_past_the_edge_is_slid_back_inside(self):
+        top, left, h, w = crop_box(100, 100, 0.5, (0.5, 1.0))
+        self.assertEqual(left + w, 100)
+
+    def test_a_centre_outside_the_image_is_refused(self):
+        with self.assertRaises(ValueError):
+            crop_box(100, 100, 0.5, (0.5, 1.5))
+
+    def test_the_step_crops_off_centre_and_round_trips(self):
+        from lerobot.processor import ProcessorStepRegistry
+
+        img = torch.zeros(1, 3, 10, 100)
+        img[..., :, :30] = 1.0  # a bright band left of where the box starts
+        step = HarenaTactileCropProcessorStep(fraction=(1.0, 0.5), centre=(0.5, 0.7))
+        key = f"observation.images.{TACTILE_CAMERAS[0]}"
+        out = step.observation({key: img})[key]
+        self.assertEqual(float(out.max()), 0.0)
+        rebuilt = ProcessorStepRegistry.get("so101_tactile_crop")(**step.get_config())
+        self.assertEqual(rebuilt.get_config()["centre"], [0.5, 0.7])
+
+    def test_a_tiled_composite_crops_each_tile_off_centre(self):
+        img = torch.zeros(1, 3, 20, 200)
+        img[..., :, :30] = 1.0  # the left band of the left tiles only
+        img[..., :, 100:130] = 1.0
+        out = crop_tiles_and_restore(img, (1.0, 0.5), 2, 2, centre=(0.5, 0.7))
+        self.assertEqual(float(out.max()), 0.0)
 
 
 class ShapeIsPreservedTest(unittest.TestCase):
@@ -162,6 +205,65 @@ class ProcessorStepTest(unittest.TestCase):
             HarenaTactileCropProcessorStep(fraction=0.0)
 
 
+def quad(height=48, width=64, border=3):
+    """A 2x2 composite of four leaky tiles, each tile's interior a distinct value."""
+    tile_h, tile_w = height // 2, width // 2
+    img = torch.zeros(1, 3, height, width)
+    for i in range(4):
+        row, col = divmod(i, 2)
+        tile = leaky_frame(tile_h, tile_w, border=border, value=9.0)
+        tile[..., border:-border, border:-border] = float(i + 1)
+        img[
+            ..., row * tile_h : (row + 1) * tile_h, col * tile_w : (col + 1) * tile_w
+        ] = tile
+    return img
+
+
+class TiledCompositeTest(unittest.TestCase):
+    """FastWAM reads the four fingertips as one 2x2 composite."""
+
+    def test_each_tile_keeps_its_own_content_in_its_own_quadrant(self):
+        out = crop_tiles_and_restore(quad(), (0.6, 0.6), 2, 2)
+        self.assertEqual(out.shape, quad().shape)
+        for i in range(4):
+            row, col = divmod(i, 2)
+            tile = out[..., row * 24 : (row + 1) * 24, col * 32 : (col + 1) * 32]
+            self.assertTrue(torch.allclose(tile, torch.full_like(tile, i + 1.0)), i)
+
+    def test_the_inner_edges_go_too(self):
+        # A crop of the whole composite would keep the rims where tiles meet.
+        whole = crop_and_restore(quad(), (0.6, 0.6))
+        tiled = crop_tiles_and_restore(quad(), (0.6, 0.6), 2, 2)
+        self.assertAlmostEqual(float(tiled.max()), 4.0, places=4)
+        self.assertAlmostEqual(float(whole.max()), 9.0, places=4)
+
+    def test_the_step_crops_a_named_composite_per_tile(self):
+        step = HarenaTactileCropProcessorStep(
+            fraction=(0.6, 0.6), tiled={"tactile_quad": (2, 2)}
+        )
+        key = "observation.images.tactile_quad"
+        out = step.observation({key: quad(), "observation.images.central": quad()})
+        self.assertEqual(float(out[key].max()), 4.0)
+        self.assertTrue(torch.equal(out["observation.images.central"], quad()))
+        self.assertEqual(step.get_config()["tiled"], {"tactile_quad": [2, 2]})
+
+    def test_a_tiled_crop_without_resize_is_refused(self):
+        with self.assertRaises(ValueError):
+            HarenaTactileCropProcessorStep(tiled={"tactile_quad": (2, 2)}, resize=False)
+
+    def test_the_fastwam_crop_names_its_composite_by_default(self):
+        from actoris_harena.policies.fastwam_crop.configuration_fastwam_crop import (
+            HarenaFastwamCropConfig,
+        )
+
+        self.assertEqual(
+            HarenaFastwamCropConfig.__dataclass_fields__[
+                "tactile_tiled"
+            ].default_factory(),
+            {"tactile_quad": (2, 2)},
+        )
+
+
 class RegistrationTest(unittest.TestCase):
     """LeRobot resolves these by string surgery on the config class name."""
 
@@ -178,6 +280,18 @@ class RegistrationTest(unittest.TestCase):
             "HarenaPi05CropConfig",
             "HarenaPi05CropPolicy",
             "pi05_crop",
+        ),
+        (
+            "harena_dreamzero_crop",
+            "HarenaDreamzeroCropConfig",
+            "HarenaDreamzeroCropPolicy",
+            "dreamzero_crop",
+        ),
+        (
+            "harena_fastwam_crop",
+            "HarenaFastwamCropConfig",
+            "HarenaFastwamCropPolicy",
+            "fastwam_crop",
         ),
     )
 
@@ -244,6 +358,8 @@ class RegistrationTest(unittest.TestCase):
             ("harena_act_crop", "harena_act"),
             ("harena_diffusion_crop", "harena_diffusion"),
             ("harena_pi05_crop", "harena_pi05"),
+            ("harena_dreamzero_crop", "harena_dreamzero"),
+            ("harena_fastwam_crop", "harena_fastwam"),
         ):
             with self.subTest(crop):
                 for key in ("steps", "batch", "hours", "max_cameras"):
@@ -492,6 +608,118 @@ class WhichFamiliesCanCropWithoutResizingTest(unittest.TestCase):
         )
 
         self.config_with_mixed_shapes(HarenaActCropConfig).validate_features()
+
+
+class ActionConditionedVideoTest(unittest.TestCase):
+    """The FastWAM crop arm can let its video expert read the action chunk."""
+
+    def test_off_by_default_and_reaches_the_video_expert_when_on(self):
+        from actoris_harena.policies.fastwam_crop.configuration_fastwam_crop import (
+            HarenaFastwamCropConfig,
+        )
+
+        self.assertFalse(
+            HarenaFastwamCropConfig().video_dit_config["action_conditioned"]
+        )
+        on = HarenaFastwamCropConfig(action_conditioned_video=True)
+        self.assertTrue(on.video_dit_config["action_conditioned"])
+
+
+class SeparateTactileBackboneTest(unittest.TestCase):
+    """ACT with one encoder for the overhead camera and one for the fingertips."""
+
+    def policy(self, separate):
+        from lerobot.configs.types import FeatureType, PolicyFeature
+
+        from actoris_harena.policies.act_crop.configuration_act_crop import (
+            HarenaActCropConfig,
+        )
+        from actoris_harena.policies.act_crop.modeling_act_crop import (
+            HarenaActCropPolicy,
+        )
+
+        config = HarenaActCropConfig(
+            device="cpu",
+            pretrained_backbone_weights=None,
+            tactile_crop=(1.0, 1.0),
+            separate_tactile_backbone=separate,
+            dim_model=32,
+            n_heads=2,
+            dim_feedforward=64,
+            n_encoder_layers=1,
+            n_vae_encoder_layers=1,
+            chunk_size=4,
+            n_action_steps=4,
+        )
+        image = PolicyFeature(type=FeatureType.VISUAL, shape=(3, 32, 32))
+        config.input_features = {
+            "observation.state": PolicyFeature(type=FeatureType.STATE, shape=(12,)),
+            "observation.images.central": image,
+            "observation.images.left_arm_left_gripper": image,
+            "observation.images.right_arm_left_gripper": image,
+        }
+        config.output_features = {
+            "action": PolicyFeature(type=FeatureType.ACTION, shape=(12,))
+        }
+        return HarenaActCropPolicy(config)
+
+    def batch(self):
+        torch.manual_seed(0)
+        return {
+            "observation.state": torch.randn(2, 12),
+            "observation.images.central": torch.rand(2, 3, 32, 32),
+            "observation.images.left_arm_left_gripper": torch.rand(2, 3, 32, 32),
+            "observation.images.right_arm_left_gripper": torch.rand(2, 3, 32, 32),
+            "action": torch.randn(2, 4, 12),
+            "action_is_pad": torch.zeros(2, 4, dtype=torch.bool),
+        }
+
+    def test_off_by_default_keeps_one_backbone(self):
+        policy = self.policy(separate=False)
+        self.assertNotIn("model.backbone.tactile", dict(policy.named_modules()))
+
+    def test_each_camera_reaches_its_own_group_s_encoder(self):
+        policy = self.policy(separate=True)
+        router = policy.model.backbone
+        self.assertEqual(router.is_tactile, [False, True, True])
+        calls = []
+        router.overhead.register_forward_hook(lambda *a: calls.append("overhead"))
+        router.tactile.register_forward_hook(lambda *a: calls.append("tactile"))
+        loss, _ = policy.forward(self.batch())
+        loss.backward()
+        self.assertEqual(calls, ["overhead", "tactile", "tactile"])
+
+        # Both encoders learn, and from different images: their gradients differ.
+        def first(module):
+            return next(p for p in module.parameters() if p.requires_grad)
+
+        self.assertIsNotNone(first(router.overhead).grad)
+        self.assertIsNotNone(first(router.tactile).grad)
+        self.assertFalse(
+            torch.equal(first(router.overhead).grad, first(router.tactile).grad)
+        )
+
+    def test_both_encoders_take_the_backbone_learning_rate(self):
+        policy = self.policy(separate=True)
+        groups = policy.get_optim_params()
+        backbone = {id(p) for p in groups[1]["params"]}
+        tactile = {
+            id(p) for p in policy.model.backbone.tactile.parameters() if p.requires_grad
+        }
+        self.assertTrue(tactile and tactile <= backbone)
+
+    def test_a_turn_counter_left_mid_pass_is_reset(self):
+        policy = self.policy(separate=True)
+        policy.model.backbone._turn = 2
+        calls = []
+        policy.model.backbone.overhead.register_forward_hook(
+            lambda *a: calls.append("o")
+        )
+        policy.model.backbone.tactile.register_forward_hook(
+            lambda *a: calls.append("t")
+        )
+        policy.forward(self.batch())
+        self.assertEqual(calls, ["o", "t", "t"])
 
 
 if __name__ == "__main__":
