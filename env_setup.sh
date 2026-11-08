@@ -22,7 +22,7 @@ conda activate actoris-harena
 export PYTORCH_JIT=0
 export EGL_GPU=$CUDA_VISIBLE_DEVICES
 
-### Actoris-Harene
+### Actoris-Harena
 export ACTORIS_HARENA_PATH=${PWD}/actoris_harena
 export PYTHONPATH=${ACTORIS_HARENA_PATH}/../:$PYTHONPATH
 

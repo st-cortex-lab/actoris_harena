@@ -20,9 +20,9 @@ class FoldsformerAdapter(TrainableAgent):
         
         self.device = config.device
         
-        model_config_path = os.path.join(os.environ['actoris_harena_PATH'], "agent", "cloth_control", "foldsformer", "train.yaml")
+        model_config_path = os.path.join(os.environ['ACTORIS_HARENA_PATH'], "agent", "cloth_control", "foldsformer", "train.yaml")
         configs = get_configs(model_config_path)
-        self.trained_model_path = os.path.join(os.environ['actoris_harena_PATH'], "data", "foldsformer", "trained model", "foldsformer_eval.pth")
+        self.trained_model_path = os.path.join(os.environ['ACTORIS_HARENA_PATH'], "data", "foldsformer", "trained model", "foldsformer_eval.pth")
         self.net = setup_model(configs)
         self.net = self.net.to(self.device)
         self.img_size = 224
@@ -54,7 +54,7 @@ class FoldsformerAdapter(TrainableAgent):
             }
         }
 
-        demo_dir = os.path.join(os.environ['actoris_harena_PATH'], "data", "foldsformer", "demo")
+        demo_dir = os.path.join(os.environ['ACTORIS_HARENA_PATH'], "data", "foldsformer", "demo")
 
         for task, config in self.goal_config.items():
             task_dir = os.path.join(demo_dir, config['alias'])

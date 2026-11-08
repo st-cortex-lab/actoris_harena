@@ -25,7 +25,7 @@ class Task(Task):
 
     def _get_goal_path(self, arena, task, eid, mode):
         
-        goal_dir = f'{os.environ["actoris_harena_PATH"]}/../data/goals/{arena}/{task}/{mode}/eid_{eid}'
+        goal_dir = f'{os.environ["ACTORIS_HARENA_PATH"]}/../data/goals/{arena}/{task}/{mode}/eid_{eid}'
         return goal_dir
     
         # if self.domain == 'mono-square-fabric':

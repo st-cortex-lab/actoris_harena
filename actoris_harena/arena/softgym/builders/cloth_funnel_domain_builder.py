@@ -24,7 +24,7 @@ class ClothFunnelDomainBuilder():
             'grasp_mode': {'closest': 1.0},
             "picker_initial_pos": [[0.7, 0.2, 0.7], [-0.7, 0.2, 0.7]],
             'init_state_path': os.path.join(
-                os.environ['actoris_harena_PATH'], '..', 'data', 'cloth_funnel', 'init_states'),
+                os.environ['ACTORIS_HARENA_PATH'], '..', 'data', 'cloth_funnel', 'init_states'),
             'task': task,
             'disp': True if disp == 'True' else False,
             'ray_id': rayid,

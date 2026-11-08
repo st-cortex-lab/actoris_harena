@@ -44,7 +44,7 @@ class ClothVisionPickAndPlaceHDF5Dataset(Dataset):
         **kwargs
     ):
         self.data_dir = os.path.join(
-            os.environ['actoris_harena_PATH'],
+            os.environ['ACTORIS_HARENA_PATH'],
             '..',
             'data',
             data_dir)

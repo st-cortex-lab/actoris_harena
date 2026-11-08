@@ -41,8 +41,8 @@ class TrajectoryDataset(Dataset):
         self.mode = io_mode
         
         if data_dir is None:
-            if 'actoris_harena_PATH' in os.environ:
-                 base_path = os.path.join(os.environ['actoris_harena_PATH'], '..', 'data')
+            if 'ACTORIS_HARENA_PATH' in os.environ:
+                 base_path = os.path.join(os.environ['ACTORIS_HARENA_PATH'], '..', 'data')
             else:
                  base_path = './data'
             data_path = os.path.join(base_path, data_path)

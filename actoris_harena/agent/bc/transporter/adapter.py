@@ -127,7 +127,7 @@ class TransporterAdapter(TrainableAgent):
 
         #         # dataset_params = yaml.safe_load(
         #         #     Path('{}/configuration/datasets/{}.yaml'.\
-        #         #         format(os.environ['actoris_harena_PATH'], dataset_dict.name)).read_text())
+        #         #         format(os.environ['ACTORIS_HARENA_PATH'], dataset_dict.name)).read_text())
         #         # dataset_params.update(dataset_dict['params'])
                 
                 

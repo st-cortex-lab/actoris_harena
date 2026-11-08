@@ -33,7 +33,7 @@ class DreamerAdapter():
 
     default_configs = yaml.safe_load(
         (pathlib.Path('{}/agent/algorithm/dreamerV2/configs.yaml'\
-                      .format(os.environ['actoris_harena_PATH'])).read_text()))
+                      .format(os.environ['ACTORIS_HARENA_PATH'])).read_text()))
     
     vv = config.toDict()
     updated_vv = default_configs['defaults']
@@ -78,7 +78,7 @@ class DreamerAdapter():
 
               dataset_params = yaml.safe_load(
                   Path('{}/yamls/datasets/{}.yaml'.\
-                      format(os.environ['actoris_harena_PATH'], 
+                      format(os.environ['ACTORIS_HARENA_PATH'], 
                               dataset_dict['name'])).read_text())
               dataset_params.update(dataset_dict['params'])
               

@@ -22,7 +22,7 @@ class UR3eDomainBuilder():
             'picker_high': (5, 5, 5),
             'grasp_mode': {'closest': 1.0},
             'init_state_path': os.path.join(
-                os.environ['actoris_harena_PATH'], '..', 'data', 'cloth_funnel', 'init_states'),
+                os.environ['ACTORIS_HARENA_PATH'], '..', 'data', 'cloth_funnel', 'init_states'),
             'task': task,
             'disp': True if disp == 'True' else False,
             'ray_id': rayid,

@@ -38,15 +38,17 @@ def retrieve_config(agent_name: str, arena_name:str,
     config = DotMap()
     
     config_path = '{}/{}/{}.yaml'.format(agent_name, arena_name, config_name)
-    if config_dir == None: ## If None load from agent-arena trajecotry
-        config_path = os.path.join(os.environ['actoris_harena_PATH'], 'configuration', 'train_and_evaluate', config_path)
-        if agent_name in AGENT_NEEDS_CONFIG.keys():
-            config = retrieve_config_from_path(config_path)
+    if config_dir == None: ## If None load from the configs packaged with actoris_harena
+        config_path = os.path.join(os.environ['ACTORIS_HARENA_PATH'], 'configuration', 'train_and_evaluate', config_path)
+        # AGENT_NEEDS_CONFIG and AGENT_NO_CONFIG were merged into one AGENTS map
+        # (9f35131), so whether an agent has a config is now whether its file
+        # exists. A name AGENTS does not know is an oracle, which build_agent
+        # hands to OracleBuilder -- the same three outcomes as before.
+        if agent_name in AGENTS:
+            if os.path.exists(config_path):
+                config = retrieve_config_from_path(config_path)
             config.oracle = False
-        elif agent_name in AGENT_NO_CONFIG.keys():
-            pass
         else:
-            
             config.oracle = True
     else: ## load from customised trajectory
         config_path = os.path.join(config_dir, config_path)
@@ -126,8 +128,8 @@ def build_agent(
 
     Args:
         name: The registry key string identifying the agent class to instantiate.
-            Must be present in either `AGENT_NEEDS_CONFIG` or `AGENT_NO_CONFIG`,
-            or handled by `OracleBuilder`.
+            Must be a key of `AGENTS`, or (with `config.oracle` set) a name
+            `OracleBuilder` can build.
         config: A DotMap containing hyperparameters and initialization settings
             for the agent. Defaults to None.
         save_dir: The root directory path where the agent's logs and model
@@ -145,13 +147,8 @@ def build_agent(
     """
     if config is not None and config.get("oracle", False):
         agent = OracleBuilder.build(name)
-    
-    # if name in AGENT_NEEDS_CONFIG.keys():
-        
-    # else:
-    #     agent = AGENT_NO_CONFIG[name](config)
-    
-    agent = AGENTS[name](config)
+    else:
+        agent = AGENTS[name](config)
     
     agent.set_log_dir(save_dir, project_name, exp_name, disable_wandb=disable_wandb)
     return agent
@@ -523,6 +520,46 @@ def train_and_evaluate_single(
                 env_success_stop=env_success_stop)
     
     return True
+
+def train_and_evaluate(
+        agent: TrainableAgent, arena: Arena,
+        validation_interval: int, total_update_steps: int,
+        eval_checkpoint: int = -1) -> bool:
+    """
+    The pre-rename entry point, kept because consumers still call it.
+
+    9227768 renamed this to `train_and_evaluate_single` and later gave that
+    function a different fifth parameter (`eval_last_check`), so it cannot be
+    an alias: bimanual_garment_folding and JA-TN pass `eval_checkpoint`
+    positionally, and an int there would silently mean "evaluate the last
+    checkpoint". This is the original body: train with periodic validation,
+    keep the best, then evaluate at `eval_checkpoint` -- training stops there
+    too when it is a step (>= 0).
+    """
+    if validation_interval > 0:
+        assert total_update_steps > 0, 'Total update steps must be greater than 0'
+        start_update_step = agent.load() #If no checkpint, it will return 0 --> no training
+
+        if eval_checkpoint >= 0:
+            total_update_steps = min(total_update_steps, eval_checkpoint)
+
+        for u in range(start_update_step, int(total_update_steps), validation_interval):
+            arena.set_train()
+            agent.train(validation_interval, [arena])
+            agent.save()
+
+            results = validate(agent, arena, u + validation_interval)
+            best_results = load_best_results(agent.save_dir)
+            if len(best_results) == 0 or compare_results(results, best_results, arena.compare) > 0:
+                agent.save_best()
+                save_best_results(results, agent.save_dir,  u + validation_interval)
+
+    else:
+        agent.train([arena])
+
+    evaluate(agent, arena, checkpoint=eval_checkpoint)
+    return True
+
 
 def train_plural_eval_single(
         agent: TrainableAgent, train_arenas: List[Arena], eval_arena: Arena, val_arena: Arena,

@@ -42,6 +42,12 @@ from typing import Any
 PACKAGE_ROOT = Path(__file__).parent.resolve()
 
 os.environ["ACTORIS_HARENA_PATH"] = str(PACKAGE_ROOT)
+# A compatibility alias, not a second name to use. Seventeen sites here once read
+# the lowercase spelling against this uppercase setter (Linux environment names
+# are case-sensitive, so they raised KeyError); those now read the uppercase one,
+# but consumers' code still reads the lowercase -- the magpie datasets in
+# bimanual_garment_folding and learning_garment_manipulation among them.
+os.environ["actoris_harena_PATH"] = str(PACKAGE_ROOT)
 os.environ["RAVENS_ASSETS_DIR"] = str(PACKAGE_ROOT / "arena/raven/environments/assets")
 os.environ["DEFORMABLE_RAVEN_ASSETS_DIR"] = str(
     PACKAGE_ROOT / "arena/deformable_raven/src/assets"
@@ -64,6 +70,7 @@ _LAZY: "dict[str, str]" = {
     "Logger": "actoris_harena.utilities.logger.logger_interface",
     "StandardLogger": "actoris_harena.arena.loggers.standard_logger",
     "build_arena": "actoris_harena.api",
+    "train_and_evaluate": "actoris_harena.api",
     "train_and_evaluate_single": "actoris_harena.api",
     "train_plural_eval_single": "actoris_harena.api",
     "build_transform": "actoris_harena.api",

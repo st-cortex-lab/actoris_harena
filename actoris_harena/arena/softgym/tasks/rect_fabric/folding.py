@@ -420,5 +420,5 @@ class FoldingTask(Task):
         """
         
         return '{}/data/rect_fabric/goals/{}/{}/initial_{}/{}/{}_eid_{}'\
-            .format(os.environ['actoris_harena_PATH'], self.task_name, self.domain, 
+            .format(os.environ['ACTORIS_HARENA_PATH'], self.task_name, self.domain, 
                     self.initial, self.action, mode, eid)

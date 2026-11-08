@@ -82,7 +82,7 @@ class DiffusionDataset(torch.utils.data.Dataset):
 
         # read from zarr dataset
         dataset_path = os.path.join(
-            os.environ['actoris_harena_PATH'],
+            os.environ['ACTORIS_HARENA_PATH'],
             '..',
             'data',
             dataset_path)

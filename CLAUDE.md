@@ -300,7 +300,13 @@ SUBPROCESS to catch it.
 - **Pre-commit runs black, isort, flake8, mypy**, scoped as above. Match them.
 - **Git: every change set starts on a fresh branch off `develop`.** Finish with a
   commit ending in the `Co-Authored-By: Claude …` trailer. The user pushes.
-- The sim side has known latent bugs that are NOT this pipeline's to fix:
-  `api.py:43,46` reference an undefined `AGENT_NEEDS_CONFIG`, and seventeen sites
-  read `os.environ['actoris_harena_PATH']` (lowercase) against an uppercase
-  setter. Recorded so nobody rediscovers them as new.
+- The sim side's bugs that broke CONSUMERS have been fixed, and each fix is a
+  compatibility promise (`documents/compatibility.md`): `retrieve_config` no
+  longer names the `AGENT_NEEDS_CONFIG` map that 9f35131 merged into `AGENTS`;
+  `build_agent` no longer overwrites the oracle it just built; the package reads
+  `ACTORIS_HARENA_PATH` and ALSO sets the lowercase `actoris_harena_PATH`,
+  because consumers' code reads that one; and `train_and_evaluate` exists again
+  with its pre-rename signature. It cannot be an alias of
+  `train_and_evaluate_single`, whose fifth parameter is now `eval_last_check`.
+  Still open, and not ours to invent: softgym imports
+  `agent.oracle.rect_fabric.real2sim_smoothing`, which does not exist here.
