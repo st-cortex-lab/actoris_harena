@@ -28,14 +28,14 @@ LeRobot pins `numpy>=2.0,<2.3` and `requires-python>=3.12`; the sim stack pins
 Arena, TrajectoryDataset and all of `api` eagerly, which transitively pulled
 torch, pybullet, dm_control and robosuite — so `import actoris_harena.recording`,
 one pure parquet module, was impossible in a robot venv. Adding an eager import
-back would break every robot repo, and `test/rig/test_packaging.py` runs a
+back would break every robot repo, and `test/unit/test_packaging.py` runs a
 SUBPROCESS to catch it.
 
 ## Working style
 
 - Be surgical: make only the changes the task needs.
 - **Linting is scoped**, and deliberately. `.pre-commit-config.yaml`'s `files:`
-  covers the rig pipeline and `test/rig/` only. Running black over the 355 sim
+  covers the rig pipeline and `test/unit/` only. Running black over the 355 sim
   files would be a ~64k-line reformat that destroys `git blame` and makes
   `origin/dataset`, `origin/ros1-noetic` and `origin/ros2-humble` unmergeable,
   for no gain.
@@ -235,7 +235,7 @@ SUBPROCESS to catch it.
   `test/integration/test_policy_ports_checkpoints.py`). `_port.py` holds every
   rule the port applies and `tool/port_policies.py --check` re-derives them, so
   a LeRobot bump is one command and a hand-edit fails
-  `test/rig/test_policy_ports.py` immediately. The three ported directories are
+  `test/unit/test_policy_ports.py` immediately. The three ported directories are
   excluded from black/isort/flake8/mypy in `.pre-commit-config.yaml` for that
   reason — reformatting them would destroy the diff against upstream that makes
   the claim checkable; `mypy.ini` skips them at the IMPORT boundary too, because

@@ -51,7 +51,7 @@ test: test-unit test-integration
 
 test-unit: check-python
 	@echo "using $(PYTHON)"
-	@$(PYTHON) -m unittest discover -s test/rig -t .
+	@$(PYTHON) -m unittest discover -s test/unit -t .
 
 # Slower: builds real models and loads real checkpoints. The one that matters
 # most is test_policy_ports_checkpoints, which compares a port against its

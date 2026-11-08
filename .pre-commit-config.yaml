@@ -14,7 +14,7 @@
 # flake8 ignores come from -- keep them in step).
 #
 # Enable with:  pre-commit install
-files: '^(actoris_harena/(__init__\.py|recording/|training/|analysis/|policies/|deploy/|web/|rigs\.py|cli\.py)|test/rig/)'
+files: '^(actoris_harena/(__init__\.py|recording/|training/|analysis/|policies/|deploy/|web/|rigs\.py|cli\.py|sync\.py|outputs\.py|action_layout\.py)|test/unit/|tool/check_wheel\.py)'
 
 # The four ported policies are upstream LeRobot modules MOVED here, not
 # rewritten, and they are deliberately byte-comparable to their source: that is
@@ -61,3 +61,14 @@ repos:
       - id: mypy
         args: ["--ignore-missing-imports", "--explicit-package-bases"]
         additional_dependencies: [types-PyYAML]
+
+  # The same gate as so101_garment and ur3e_raven: a commit runs the unit tier.
+  # It is pure Python (no arm, no camera, no network) and takes ~30 s, through
+  # whichever interpreter the Makefile finds -- see its check-python target.
+  - repo: local
+    hooks:
+      - id: unit-tests
+        name: unit tests (make test-unit)
+        entry: make test-unit
+        language: system
+        pass_filenames: false

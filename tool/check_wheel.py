@@ -20,7 +20,6 @@ from __future__ import annotations
 
 import argparse
 import subprocess
-import sys
 import zipfile
 from pathlib import Path
 
@@ -68,15 +67,21 @@ def main() -> None:
 
     wheels = sorted(args.wheel_dir.glob("actoris_harena-*.whl"))
     if len(wheels) != 1:
-        raise SystemExit(f"❌ expected one actoris_harena wheel in {args.wheel_dir}, found {len(wheels)}")
+        raise SystemExit(
+            f"❌ expected one actoris_harena wheel in {args.wheel_dir}, found {len(wheels)}"
+        )
 
     gaps = missing_from(wheels[0])
     if gaps:
         for directory, absent in gaps.items():
-            print(f"❌ {directory}: {len(absent)} file(s) not in the wheel, e.g. {absent[0]}")
-        raise SystemExit("   add them to [tool.setuptools.package-data] in pyproject.toml")
+            print(
+                f"❌ {directory}: {len(absent)} file(s) not in the wheel, e.g. {absent[0]}"
+            )
+        raise SystemExit(
+            "   add them to [tool.setuptools.package-data] in pyproject.toml"
+        )
     print(f"✓ {wheels[0].name} carries every data file in {len(DATA_DIRS)} directories")
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

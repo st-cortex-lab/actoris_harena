@@ -8,7 +8,7 @@ The other half of the original test -- the tuner's YAML round-trip -- stays in
 so101_garment, because tool/tune_cameras.py is a per-rig tool and not part of
 this package.
 
-Run:  python -m unittest test.rig.test_camera_controls
+Run:  python -m unittest test.unit.test_camera_controls
 """
 
 import unittest
