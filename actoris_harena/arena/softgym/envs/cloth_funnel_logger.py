@@ -11,7 +11,7 @@ class ClothFunnelLogger(Logger):
     
     def __call__(self, episode_config, result, filename=None, wandb_logger=None):
 
-        eid, save_video = episode_config['eid'], episode_config['save_video']
+        eid, save_video = episode_config['eid'], episode_config.get('save_video', False)
         if not os.path.exists(self.log_dir):
             os.makedirs(self.log_dir)
         

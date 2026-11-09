@@ -12,7 +12,9 @@ class PickAndPlaceRectFabricSingleTaskLogger(Logger):
 
     def __call__(self, episode_config, result, filename=None, wandb_logger=None):
 
-        tier, eid, save_video = episode_config['tier'], episode_config['eid'], episode_config['save_video']
+        # Validation configs carry only 'eid'; tier and save_video are eval's.
+        tier, eid = episode_config.get('tier', 0), episode_config['eid']
+        save_video = episode_config.get('save_video', False)
         if not os.path.exists(self.log_dir):
             os.makedirs(self.log_dir)
         
@@ -136,7 +138,7 @@ class PickAndPlaceRectFabricSingleTaskLogger(Logger):
             )
 
     def check_exist(self, episode_config, filename=None):
-        tier, eid = episode_config['tier'], episode_config['eid']
+        tier, eid = episode_config.get('tier', 0), episode_config['eid']
 
         if filename is None:
             filename = 'manupilation'
