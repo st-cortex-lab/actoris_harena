@@ -5,7 +5,7 @@ class PickAndPlaceRectFabricAllTaskLogger(PickAndPlaceRectFabricSingleTaskLogger
     def __init__(self, log_dir):
         super().__init__(log_dir)
     
-    def __call__(self, episode_config, result):
+    def __call__(self, episode_config, result, filename=None, wandb_logger=None):
 
         ## Call Super
         super().__call__(episode_config, result, filename=episode_config['task'])

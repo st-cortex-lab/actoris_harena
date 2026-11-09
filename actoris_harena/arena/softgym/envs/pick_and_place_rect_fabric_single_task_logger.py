@@ -10,7 +10,7 @@ from actoris_harena.utilities.visual_utils import plot_image_trajectory
 
 class PickAndPlaceRectFabricSingleTaskLogger(Logger):
 
-    def __call__(self, episode_config, result, filename=None):
+    def __call__(self, episode_config, result, filename=None, wandb_logger=None):
 
         tier, eid, save_video = episode_config['tier'], episode_config['eid'], episode_config['save_video']
         if not os.path.exists(self.log_dir):
@@ -33,7 +33,8 @@ class PickAndPlaceRectFabricSingleTaskLogger(Logger):
         for k in evaluation_keys:
             df_dict['evaluation/'+ k] = [evaluations[k]]
         
-        internal_stattes = result['internal_states'] ## list of dictionaries
+        # Only present when the run saved them (save_internal_states=True).
+        internal_stattes = result.get('internal_states') or [{}]  ## list of dictionaries
         #print('internal_stattes', internal_stattes[0].keys())
 
         if 'denoise_action_rgb' in internal_stattes[0]:
@@ -99,7 +100,15 @@ class PickAndPlaceRectFabricSingleTaskLogger(Logger):
         else:
             result['actions'] = np.stack(result['actions'])
             T = result['actions'].shape[0]
-            N = result['actions'].shape[1]
+            if result['actions'].ndim == 2:
+                # One picker's flat [pick, place] per step, as the transporter
+                # adapters return it; reverse each pair into the dict order
+                # above (see pixel_pick_and_place.process).
+                a = result['actions'].reshape(T, 4)
+                result['actions'] = np.concatenate([a[:, 1::-1], a[:, 3:1:-1]], axis=1)
+                N = 1
+            else:
+                N = result['actions'].shape[1]
         result['actions'] = result['actions'].reshape(T, N, 2, -1)[:, :, :, :2]
         #print('keys of information', result['informations'][0].keys())
         print('results keys', result.keys())

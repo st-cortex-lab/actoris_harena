@@ -89,7 +89,7 @@ class FoldsformerAdapter(TrainableAgent):
 
         ## resize to img_size
         depth = cv2.resize(depth, (self.img_size, self.img_size), interpolation=cv2.INTER_NEAREST)
-        mask = cv2.resize(mask.astype(np.float), (self.img_size, self.img_size), interpolation=cv2.INTER_NEAREST)
+        mask = cv2.resize(mask.astype(float), (self.img_size, self.img_size), interpolation=cv2.INTER_NEAREST)
         mask = (mask > 0.9).astype(np.bool8) 
 
         task = state['task']

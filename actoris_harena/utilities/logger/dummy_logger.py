@@ -4,7 +4,7 @@ class DummyLogger(Logger):
     def __init__(self):
         super().__init__()
 
-    def __call__(self, episode_config, result, filename):
+    def __call__(self, episode_config, result, filename, wandb_logger=None):
         pass
     
     def check_exist(self, episode_config, *args, **kwargs):

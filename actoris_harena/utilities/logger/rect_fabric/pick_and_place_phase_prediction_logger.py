@@ -11,7 +11,7 @@ class PickAndPlacePhasePredictionLogger(Logger):
     def __init__(self, log_dir):
         super().__init__(log_dir)
     
-    def __call__(self, episode_config, result, filename=None):
+    def __call__(self, episode_config, result, filename=None, wandb_logger=None):
 
         tier, eid, save_video = episode_config['tier'], episode_config['eid'], episode_config['save_video']
         if not os.path.exists(self.log_dir):

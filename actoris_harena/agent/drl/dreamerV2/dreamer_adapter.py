@@ -31,7 +31,7 @@ class DreamerAdapter():
   def __init__(self, config):
 
 
-    default_configs = yaml.safe_load(
+    default_configs = yaml.YAML(typ='safe', pure=True).load(
         (pathlib.Path('{}/agent/algorithm/dreamerV2/configs.yaml'\
                       .format(os.environ['ACTORIS_HARENA_PATH'])).read_text()))
     
@@ -76,7 +76,7 @@ class DreamerAdapter():
               print()
               print('Initialising dataset {} from name {}'.format(key, dataset_dict['name']))
 
-              dataset_params = yaml.safe_load(
+              dataset_params = yaml.YAML(typ='safe', pure=True).load(
                   Path('{}/yamls/datasets/{}.yaml'.\
                       format(os.environ['ACTORIS_HARENA_PATH'], 
                               dataset_dict['name'])).read_text())

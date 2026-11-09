@@ -319,7 +319,12 @@ def show_image(img, window_name=''):
     cv2.waitKey(1)
 
 
-def save_numpy_as_gif(frames, path, filename, fps=20, scale=1.0, select_frames=1000):
+def save_numpy_as_gif(frames, path, filename=None, fps=20, scale=1.0, select_frames=1000):
+    # Older callers pass one path with the name in it: save_numpy_as_gif(frames, "dir/name").
+    if filename is None:
+        path, filename = os.path.split(path)
+    if path:
+        os.makedirs(path, exist_ok=True)
     filename = os.path.join(path, f"{filename}.gif")
 
     if isinstance(frames, list):

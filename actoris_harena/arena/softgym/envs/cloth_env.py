@@ -6,6 +6,33 @@ from gym.spaces import Box
 from actoris_harena.arena.arena import Arena
 
 
+
+def _final(value):
+    """An evaluation entry is a scalar or the per-step list of one."""
+    if isinstance(value, (list, tuple, np.ndarray)):
+        return float(value[-1]) if len(value) else 0.0
+    return float(value)
+
+
+def compare_cloth_results(result_1, result_2):
+    """Which of two validation runs is better: 1, -1, or 0 for a tie.
+
+    Each result is the list of per-episode ``evaluation`` dicts `validate`
+    returns. The run with the higher mean final ``success`` wins; a tie goes
+    to the higher mean final ``normalised_coverage``. A key a task does not
+    report counts as 0 on both sides, so it never decides anything.
+    """
+    def mean_final(results, key):
+        vals = [_final(r.get(key, 0)) for r in results]
+        return float(np.mean(vals)) if vals else 0.0
+
+    for key in ("success", "normalised_coverage"):
+        a, b = mean_final(result_1, key), mean_final(result_2, key)
+        if a != b:
+            return 1 if a > b else -1
+    return 0
+
+
 class ClothEnv(Arena):
     _name = 'SoftGymClothEnv'
 
@@ -48,6 +75,15 @@ class ClothEnv(Arena):
         
     def set_task(self, task):
         self.task = task 
+
+    def compare(self, result_1, result_2):
+        # Arena.compare is abstract, and since ray 2.5x `@ray.remote` builds an
+        # instance of the class, so leaving it out fails at import. A task
+        # that knows its own ranking keeps it.
+        task = getattr(self, 'task', None)
+        if task is not None and hasattr(task, 'compare'):
+            return task.compare(result_1, result_2)
+        return compare_cloth_results(result_1, result_2)
     
     def set_id(self, id):
         self.id = id

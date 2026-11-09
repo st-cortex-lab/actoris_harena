@@ -308,7 +308,7 @@ if __name__ == '__main__':
   parser = argparse.ArgumentParser()
   parser.add_argument('--configs', nargs='+', required=True)
   args, remaining = parser.parse_known_args()
-  configs = yaml.safe_load(
+  configs = yaml.YAML(typ='safe', pure=True).load(
       (pathlib.Path(sys.argv[0]).parent / 'configs.yaml').read_text())
   defaults = {}
   for name in args.configs:

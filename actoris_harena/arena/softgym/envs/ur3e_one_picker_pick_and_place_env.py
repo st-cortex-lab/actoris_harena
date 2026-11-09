@@ -219,7 +219,7 @@ class UR3eOnePickerPickAndPlaceEnv(ClothFunnelEnv):
         self.workspace_mask = np.zeros((H, W))
         self.workspace_mask[distances < self.far_raidus] = 1
         self.workspace_mask[distances < self.near_radius] = 0
-        self.workspace_mask = self.workspace_mask.astype(np.bool)
+        self.workspace_mask = self.workspace_mask.astype(bool)
         # plt workspace mask
 
         # from matplotlib import pyplot as plt

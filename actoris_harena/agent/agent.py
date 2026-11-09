@@ -1,3 +1,4 @@
+import inspect
 from abc import ABC, abstractmethod
 from typing import Dict, List, Any
 from dotmap import DotMap
@@ -52,7 +53,7 @@ class Agent(ABC):
             logdir,
             project_name,
             name=exp_name,
-            config=dict(self.config),
+            config=dict(self.config or {}),
             disable_wandb=disable_wandb
         )
 
@@ -116,10 +117,15 @@ class Agent(ABC):
             actions.append(self.single_act(info, update=upd))
         return actions
 
-    @abstractmethod
     def single_act(self, info: InformationType, update: bool = False) -> ActionType:
         """
-        Produce a single action for a specific arena. Must be implemented by subclasses.
+        Produce a single action for a specific arena. Subclasses implement this,
+        or -- agents written against the older batch API -- `act` instead.
+
+        It is not abstract: with ray >= 2.5x instantiating every `@ray.remote`
+        class and the batch-API agents never defining it, an abstract method
+        here made fifteen of them impossible to build. One that overrides `act`
+        is answered through it; one that overrides neither raises.
 
         Args:
             info (InformationType): The current state/observation from a single arena.
@@ -128,7 +134,14 @@ class Agent(ABC):
         Returns:
             ActionType: The action to be executed in the environment.
         """
-        raise NotImplementedError
+        if type(self).act is Agent.act:
+            raise NotImplementedError(
+                f"{type(self).__name__} implements neither single_act nor act")
+        params = [p for p in inspect.signature(self.act).parameters.values()
+                  if p.kind in (p.POSITIONAL_ONLY, p.POSITIONAL_OR_KEYWORD)]
+        needs_updates = len(params) > 1 and params[1].default is inspect.Parameter.empty
+        actions = self.act([info], [update]) if needs_updates else self.act([info])
+        return actions[0]
 
     def success(self) -> Dict[ArenaIdType, bool]:
         """

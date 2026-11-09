@@ -5,6 +5,14 @@ import cv2
 from .utils import check_memory_usage
 from .visual_utils import save_video, save_numpy_as_gif
 
+
+def _round(v):
+    """An evaluation value to log: a flag as 0/1 (numpy bools cannot be
+    rounded, and older tasks report `success` as one), a number to 4 dp."""
+    if isinstance(v, (bool, np.bool_)):
+        return int(v)
+    return round(v, 4)
+
 def perform_single(arena, agent, mode='eval', episode_config=None,
     collect_frames=False,
     save_info=False, save_internal_states=False,
@@ -88,7 +96,7 @@ def perform_single(arena, agent, mode='eval', episode_config=None,
 
 
     for k, v in evals.items():
-        res['evaluation'][k] = [round(v, 4)]
+        res['evaluation'][k] = [_round(v)]
     res['evaluation']['success'] = [0]
 
     update_agent_from_arena(agent, arena)
@@ -156,7 +164,7 @@ def perform_single(arena, agent, mode='eval', episode_config=None,
         if env_success_stop:
             done = done or success  
         for k, v in evals.items():
-            res['evaluation'][k].append(round(v, 4))
+            res['evaluation'][k].append(_round(v))
         res['evaluation']['success'].append(int(success)) # convert to int because of json dumping not accepting bool.
 
        

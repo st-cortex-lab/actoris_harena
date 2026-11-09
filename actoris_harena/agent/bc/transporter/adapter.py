@@ -140,7 +140,8 @@ class TransporterAdapter(TrainableAgent):
     def get_name(self):
         return self.name
     
-    def set_log_dir(self, logdir, project_name, exp_name, disable_wandb=False):
+    def set_log_dir(self, logdir, project_name="actoris_harena", exp_name="tmp",
+                    disable_wandb=False):
         super().set_log_dir(logdir, project_name, exp_name, disable_wandb=disable_wandb)
         self.save_dir = logdir
         self.agent.set_save_dir(logdir)
@@ -491,7 +492,7 @@ class TransporterAdapter(TrainableAgent):
                 ret_state['goal']['depth'] = \
                     cv2.resize(ret_state['goal']['depth'], shape).reshape(shape[0], shape[1], 1)
         action = self.agent.act(ret_state)
-        if self.config.get('action_mode', 'norm-pixel-pick-and-place'):
+        if self.config.get('action_mode', 'norm-pixel-pick-and-place') == 'norm-pixel-pick-and-place':
             action = np.asarray(action).reshape(4)
         
             #print('action', action)

@@ -90,6 +90,13 @@ class PixelPickAndPlace():
     def process(self, env, action):
         #swap = action['swap'] if 'swap' in action else False
         #print('swap:', swap)
+        if not isinstance(action, dict):
+            # The transporter adapters return their raw [pick, place] pairs as a
+            # flat array since 1615cb4 (the newer garment arenas take it so).
+            # This tool's dict is each pair reversed, as the adapter built it
+            # before then.
+            flat = np.asarray(action, dtype=np.float64).reshape(-1)
+            action = {'pick_0': flat[0:2][::-1], 'place_0': flat[2:4][::-1]}
         pick_0 = np.asarray(action['pick_0'])
         place_0 = np.asarray(action['place_0'])
 

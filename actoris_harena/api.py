@@ -25,7 +25,7 @@ from actoris_harena.utilities.logger.logger_interface import Logger
 
 
 def load_yamls(file_path: str) -> typing.Dict[str, typing.Any]:
-    return yaml.safe_load(Path(file_path).read_text())
+    return yaml.YAML(typ='safe', pure=True).load(Path(file_path).read_text())
 
 def retrieve_config_from_path(config_path: str) -> typing.Dict[str, typing.Any]:
     configs = load_yamls(config_path)
@@ -104,9 +104,20 @@ def build_arena(
         Arena: An initialized instance of the requested Arena subclass, ready
             for interaction.
 
+        A name that is not in `ARENAS` but starts with a builder prefix
+        `ArenaBuilder` knows (``softgym|domain:...``, ``raven|...``) is built
+        from that spec string, as `build_arena` did before the registry
+        existed (c061b3c); callers written then still pass such strings.
+
     Raises:
-        KeyError: If `name` is not found in the `ARENAS` registry.
+        KeyError: If `name` is neither in the `ARENAS` registry nor a spec
+            string `ArenaBuilder` can build.
     """
+    if name not in ARENAS and name.split('|')[0] in ArenaBuilder._BUILDER_MAP:
+        arena = ArenaBuilder.build(name)
+        if save_dir is not None:
+            arena.set_log_dir(save_dir, project_name, exp_name)
+        return arena
     arena = ARENAS[name](config)
     arena.set_log_dir(save_dir, project_name, exp_name)
     return arena
@@ -372,6 +383,12 @@ def log_validation_metrics(results, agent, step):
         each dict: { metric_name -> list_of_values_over_steps }
     """
 
+    if not results:
+        # An arena with no validation split (ClothFunnelEnv's get_val_configs
+        # is empty): there is nothing to log, and the best-checkpoint
+        # comparison treats an empty result as a tie.
+        return
+
     # ----- EPISODE LEVEL METRICS -----
 
     # success: assume metric 'success' is 0/1 at end of episode
@@ -533,6 +550,8 @@ def train_and_evaluate(
     an alias: callers pass `eval_checkpoint`
     positionally, and an int there would silently mean "evaluate the last
     checkpoint". This is the original body: train with periodic validation,
+    handing `agent.train` the arena itself (not a list, as the newer entry
+    points do -- agents written against it treat it as one arena),
     keep the best, then evaluate at `eval_checkpoint` -- training stops there
     too when it is a step (>= 0).
     """
@@ -545,17 +564,21 @@ def train_and_evaluate(
 
         for u in range(start_update_step, int(total_update_steps), validation_interval):
             arena.set_train()
-            agent.train(validation_interval, [arena])
+            agent.train(validation_interval, arena)
             agent.save()
 
             results = validate(agent, arena, u + validation_interval)
+            # Agents written against agent-arena v0 have no save_best (v0 kept
+            # no best checkpoint), so the best is tracked only for those that do.
+            if type(agent).save_best is TrainableAgent.save_best:
+                continue
             best_results = load_best_results(agent.save_dir)
             if len(best_results) == 0 or compare_results(results, best_results, arena.compare) > 0:
                 agent.save_best()
                 save_best_results(results, agent.save_dir,  u + validation_interval)
 
     else:
-        agent.train([arena])
+        agent.train(arena)
 
     evaluate(agent, arena, checkpoint=eval_checkpoint)
     return True

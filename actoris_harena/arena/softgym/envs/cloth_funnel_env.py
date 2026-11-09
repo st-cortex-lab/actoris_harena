@@ -8,6 +8,7 @@ from softgym.action_space.action_space import Picker
 from softgym.utils.env_utils import get_coverage
 import pyflex
 from actoris_harena import Arena
+from .cloth_env import compare_cloth_results
 from tqdm import tqdm
 
 
@@ -105,6 +106,13 @@ class ClothFunnelEnv(Arena):
     def set_task(self, task):
         self.task = task
 
+    def compare(self, result_1, result_2):
+        # Arena.compare is abstract; see ClothEnv.compare.
+        task = getattr(self, 'task', None)
+        if task is not None and hasattr(task, 'compare'):
+            return task.compare(result_1, result_2)
+        return compare_cloth_results(result_1, result_2)
+
     def set_logdir(self, log_dir):
         self.logger.set_log_dir(log_dir)
 
@@ -196,7 +204,7 @@ class ClothFunnelEnv(Arena):
     def get_id(self):
         return self.id
 
-    def get_num_episodes(self) -> np.int:
+    def get_num_episodes(self) -> int:
         if self.mode == 'eval':
             return 30
         elif self.mode == 'train':
@@ -403,7 +411,7 @@ class ClothFunnelEnv(Arena):
     #     py = np.linspace(
     #         0, cloth_dimz * cloth_particle_radius, cloth_dimz)
     #     xx, yy = np.meshgrid(px, py)
-    #     new_pos = np.empty(shape=(N, 4), dtype=np.float)
+    #     new_pos = np.empty(shape=(N, 4), dtype=float)
     #     new_pos[:, 0] = xx.flatten()
     #     new_pos[:, 1] = cloth_particle_radius
     #     new_pos[:, 2] = yy.flatten()

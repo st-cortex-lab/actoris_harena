@@ -157,7 +157,12 @@ def set_scene(config,
     pyflex.change_cloth_color(rgb_color)
 
     # --- camera setup ---
-    pyflex.set_camera_params_v2(config['camera_params'][config['camera_name']])
+    # softgym's py3.10 pyflex reads cam_fov as a list ([fov] or [fov_x, fov_y]);
+    # this config keeps it a scalar, which camera_utils' maths uses.
+    camera = dict(config['camera_params'][config['camera_name']])
+    if np.isscalar(camera.get('cam_fov')):
+        camera['cam_fov'] = [float(camera['cam_fov'])]
+    pyflex.set_camera_params_v2(camera)
     step_sim_fn()
 
     # --- restore state if given ---

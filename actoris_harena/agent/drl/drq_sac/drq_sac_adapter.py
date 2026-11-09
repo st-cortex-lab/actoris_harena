@@ -38,7 +38,7 @@ class DrqSAC_Adapter():
             raise Exception("Could not find src directory. Make sure you are running the script from the root of the repository.")
     
 
-        updated_vv =  yaml.safe_load(Path('{}/agents/drq_sac/config.yml'.format(truncated_path)).read_text()) 
+        updated_vv =  yaml.YAML(typ='safe', pure=True).load(Path('{}/agents/drq_sac/config.yml'.format(truncated_path)).read_text()) 
         
         updated_vv.update(**vv)
         self.config = config =  DotMap(updated_vv)

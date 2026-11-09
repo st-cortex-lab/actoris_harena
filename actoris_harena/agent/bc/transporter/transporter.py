@@ -200,27 +200,24 @@ class TransporterAgent:
     def get_sample(self, dataset, augment=True):
         """Get a dataset sample."""
 
-        # 1. Randomly sample an index since this is now a PyTorch-style Dataset
         import numpy as np
-        idx = np.random.randint(len(dataset))
-        sample_data = dataset[idx]
+        if hasattr(dataset, 'sample') and not hasattr(dataset, '__len__'):
+            # train_mode 'from_policy': ja_tn.dataset.Dataset, the Ravens-style
+            # episode store, which hands back ((obs, act, reward, info), goal).
+            (obs, act_, _, _), (goal_obs, _, _, _) = dataset.sample()
+            obs['action'] = act_
+        else:
+            # train_mode 'from_dataset': a PyTorch-style TrajectoryDataset.
+            idx = np.random.randint(len(dataset))
+            sample_data = dataset[idx]
+            obs = sample_data['observation']
+            for k, v in obs.items():
+                obs[k] = v[0]
+            # The action key is 'default' in the configs; take the first one.
+            act_key = list(sample_data['action'].keys())[0]
+            act_ = sample_data['action'][act_key]
+            goal_obs = sample_data.get('goal', None)
 
-        # 2. Extract observation, action, and goal dictionaries
-        obs = sample_data['observation']
-        for k, v in obs.items():
-            obs[k] = v[0]
-        
-        # Your YAML defines the action key as 'default', but we'll extract the first one dynamically to be safe
-        act_key = list(sample_data['action'].keys())[0] 
-        act_ = sample_data['action'][act_key]
-        #print('act shape', act_.shape)
-        
-        goal_obs = sample_data.get('goal', None)
-
-        # 3. Inject action into obs so get_image can transform it if needed
-        #obs['action'] = act_.reshape(-1, 2)
-        
-        # 4. FIX SYNTAX ERROR: Pass goal_obs correctly (removed the double comma)
         img, act = self.get_image(obs, goal=goal_obs, train=True)
         
         if act is None:

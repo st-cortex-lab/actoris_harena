@@ -318,6 +318,12 @@ SURFACE: "dict[str, dict[str, tuple[str, ...]]]" = {
         "agent.oracle.builder": ("OracleBuilder",),
         "agent.registration": ("AGENTS",),
         "agent.trainable_agent": ("TrainableAgent",),
+        # The pre-837bebf path of torch_utils; a shim now (OPTIMISER_CLASSES too).
+        "agent.utilities.torch_utils": (
+            "OPTIMISER_CLASSES",
+            "np_to_ts",
+            "soft_update_params",
+        ),
         "agent.utilities.utils": (),
         "api": (
             "build_agent",
@@ -335,9 +341,10 @@ SURFACE: "dict[str, dict[str, tuple[str, ...]]]" = {
             "train_plural_eval_single",
         ),
         "arena.arena": ("Arena",),
+        "arena.raven": ("tasks",),
         "arena.raven.tasks": ("cameras",),
         "arena.registration": ("ARENAS",),
-        "registration.dataset": (),
+        "registration.dataset": ("name_to_dataset",),
         "torch_utils": ("np_to_ts", "ts_to_np"),
         "utilities.logger.logger_interface": ("Logger",),
         "utilities.networks.utils": ("np_to_ts", "ts_to_np"),
@@ -350,11 +357,17 @@ SURFACE: "dict[str, dict[str, tuple[str, ...]]]" = {
         "utilities.save_utils": ("save_colour", "save_depth", "save_mask"),
         "utilities.torch_utils": ("np_to_ts",),
         "utilities.trajectory_dataset": ("TrajectoryDataset",),
+        "utilities.transform.pick_and_place_transformer_v1": (
+            "PickAndPlaceTransformerV1",
+        ),
+        "utilities.transform.register": ("DATA_TRANSFORMER",),
         "utilities.transform.transporter_net_transformer": (
             "TransporterNetTransformer",
         ),
+        "utilities.utils": ("TrainWriter",),
         "utilities.visual_utils": (
             "draw_pick_and_place",
+            "filter_small_masks",
             "plot_image_trajectory",
             "plot_pick_and_place_trajectory",
             "save_numpy_as_gif",

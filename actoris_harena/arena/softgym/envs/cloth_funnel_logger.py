@@ -9,7 +9,7 @@ from actoris_harena.utilities.visual_utils import plot_pick_and_place_trajectory
 
 class ClothFunnelLogger(Logger):
     
-    def __call__(self, episode_config, result, filename=None):
+    def __call__(self, episode_config, result, filename=None, wandb_logger=None):
 
         eid, save_video = episode_config['eid'], episode_config['save_video']
         if not os.path.exists(self.log_dir):

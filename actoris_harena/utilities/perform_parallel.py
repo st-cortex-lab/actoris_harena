@@ -9,11 +9,27 @@ import actoris_harena.api as ag_ar
 from .utils import check_memory_usage
 
 
-def setup_arenas(arena_name, arena_config, num_processes=16):
+def _build_spec_arena(spec):
+    from actoris_harena.arena.builder import ArenaBuilder
+    return ArenaBuilder.build(spec, ray=True)
+
+
+def setup_arenas(arena_name, arena_config=None, num_processes=16):
     print(f"[actoris_harena, setup_arena] Setting up arenas: {arena_name}")
     gpu_per_process = torch.cuda.device_count() / num_processes
     print('[actoris_harena, setup_arena] gpu_per_process', gpu_per_process)
-    
+
+    if arena_config is None and '|' in arena_name:
+        # The pre-registry call, setup_arenas("softgym|domain:...", num_processes=n):
+        # each arena is built from its spec string as a Ray actor, and the
+        # actor handles are returned, as agent-arena v0 did.
+        spec = arena_name if ',disp:' in arena_name else f'{arena_name},disp:0'
+        arenas = [ray.remote(_build_spec_arena).options(
+            num_gpus=gpu_per_process,
+            num_cpus=0.2).remote(spec)
+            for _ in range(num_processes)]
+        return ray.get(arenas)
+
     arenas = [ray.remote(ag_ar.build_arena).options(
         num_gpus=gpu_per_process,
         num_cpus=0.2).remote(

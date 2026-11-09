@@ -21,7 +21,6 @@ class MPC_CEM(Agent):
         self.clip = config.clip
         self.goal_condition = config.goal_condition
         self.verbose = config.verbose
-        self.A = -1
 
     def initialise_cost_fn(self, cost_fn):
         if cost_fn == 'from_model':
@@ -69,7 +68,11 @@ class MPC_CEM(Agent):
     
     def _predict_and_eval(self, actions, state, goal=None):
  
-        actions = actions.reshape(-1, self.planning_horizon, self.A) #TODO: fix this
+        # Every caller puts the population first -- (popsize, H*A) here,
+        # (popsize, H, A) from the cloth-mask MPC -- so the per-step size is
+        # whatever is left. (453cba8's `self.A = -1` gave this reshape two
+        # unknown dimensions, and the action space is not always set.)
+        actions = actions.reshape(len(actions), self.planning_horizon, -1)
         #print('actions shape', actions.shape)
         pred_trajs = self.model.unroll_action_from_cur_state(actions, state)
         costs = self.cost_fn(pred_trajs, goal)

@@ -52,13 +52,16 @@ class Arena(ABC):
         """Return the unique identifier of this arena instance."""
         return self.aid
 
-    def set_log_dir(self, logdir: str, project_name: str, exp_name: str):
+    def set_log_dir(self, logdir: str, project_name: str = "actoris_harena",
+                    exp_name: str = "tmp"):
         """
         Set the logging directory and configure the active logger.
 
         Args:
             logdir (str): Base path to the log directory.
-            project_name (str): Name of the overarching project.
+            project_name (str): Name of the overarching project. Defaults
+                as `Agent.set_log_dir` does, so the one-argument call older
+                callers make still works.
             exp_name (str): Specific name of the experiment run.
         """
         self.logger.set_log_dir(logdir, project_name, exp_name)
