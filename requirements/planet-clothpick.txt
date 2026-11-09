@@ -1,0 +1,2 @@
+# PlaNet-ClothPick: everything it imports is in the sim lock.
+-r sim-py310.txt

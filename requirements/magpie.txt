@@ -1,0 +1,15 @@
+# MAGPIE (bimanual_garment_folding, controllers/magpie): the sim lock plus what it
+# and its real-robot tools import. ClothMate (a baseline in the same repository)
+# needs trimesh and OpenEXR, so they are here too.
+-r sim-py310.txt
+OpenEXR==3.5.2
+pycurl==7.49.0
+segment-anything==1.0
+trimesh==5.2.0
+
+# NOT here: torch-geometric / torch-scatter / torch-sparse. Only the VCD baseline
+# (controllers/rl/vcd) imports them, and only when it is the active agent. PyG's
+# wheels for every torch from 2.8 to 2.12 need glibc >= 2.32, so on an EL8
+# cluster they install and then fail to load. Where glibc allows it:
+#   pip install torch-geometric torch-scatter torch-sparse \
+#       -f https://data.pyg.org/whl/torch-2.12.1+cu126.html

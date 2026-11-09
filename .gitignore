@@ -39,3 +39,4 @@ dataset
 # tells people to `pip install -r requirements.txt`, so it is re-included.
 *.txt
 !requirements*.txt
+!requirements/*.txt

@@ -1,0 +1,3 @@
+# LaGarNet: the sim lock plus trimesh (lagarnet/clothfunnels mesh tools).
+-r sim-py310.txt
+trimesh==5.2.0

@@ -1,0 +1,10 @@
+# DRAPER (interface/): the sim lock plus the camera, segmentation and
+# quaternion packages it imports. ROS 2 Humble (rclpy, cv_bridge, MoveIt, the UR
+# driver) is apt-only and is installed as DRAPER's README describes, not here.
+# This is a robot-PC environment (Ubuntu 22.04 for Humble): pyrealsense2's wheel
+# needs glibc >= 2.29, so it does not load on an EL8 cluster, which DRAPER never
+# runs on.
+-r sim-py310.txt
+numpy-quaternion==2024.0.13
+pyrealsense2==2.59.1.11053
+segment-anything==1.0
