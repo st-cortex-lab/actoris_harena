@@ -196,6 +196,11 @@ branch is checked out here is what they run.
 | [`DRAPER`](https://github.com/st-cortex-lab/DRAPER) | real (ROS 2) | `requirements/draper.txt` | `retrieve_config`, `build_agent`, `utilities.visual_utils` |
 | [`softgym`](https://github.com/st-cortex-lab/softgym) | sim | none (a lazy import) | `agent.oracle.rect_fabric.real2sim_smoothing` |
 
+`requirements/smoke/` runs each sim repository's documented entry points, on tiny
+configs, against `requirements/sim-py310.txt`; every one passed there on a
+workstation and on Viking before the lock was written (its README lists the two
+known, data-only exceptions). Rerun it before moving a pin.
+
 `test/unit/test_consumer_surface.py` lists every `(module, name)` these
 repositories import. It fails if any of them stops resolving. **To move or
 rename something, update the callers first, then that table.** It cannot check
