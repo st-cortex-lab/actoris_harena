@@ -58,8 +58,17 @@ SUBPROCESS to catch it.
   a REAL wheel and fails unless every tracked file of each data directory is in
   it (`tool/check_wheel.py`). Every install here is editable, so a gap in
   `package-data` is otherwise invisible.
-- The sim side needs `[sim]` (conda env `actoris-harena`, `source env_setup.sh`).
-  Its checks are the hand-run `test/sim/check_*.py`, which nothing collects.
+- The sim side runs in a conda env built from the LOCK, `requirements/sim-py310.txt`
+  (`harena-sim`; `source env_setup.sh`), not from a fresh `[sim]` resolve. Its
+  header says why each ceiling is where it is (torch 2.12.1 for PyG, opencv 4.11
+  for numpy<2, open3d 0.18 for EL8's glibc 2.28) -- raise one only after the
+  method repos' smoke runs pass on both a workstation and Viking. Its checks are
+  the hand-run `test/sim/check_*.py`, which nothing collects.
+- **pyflex segfaults in `pyflex.init`** on a hybrid-GPU laptop or a cluster node
+  unless GLX is pointed at NVIDIA (`__GLX_VENDOR_LIBRARY_NAME=nvidia
+  __NV_PRIME_RENDER_OFFLOAD=1`, set by `env_setup.sh`); it is not the Python stack.
+- **ray >= 2.5x instantiates `@ray.remote` classes**, so an `Arena` subclass that
+  leaves an abstract method (`compare`) unimplemented now fails at IMPORT.
 - **The integration tier's checkpoint test SKIPS without a rig's outputs**, and a
   skip there is not a pass — it is the test that makes "a checkpoint trained by
   either implementation loads into the other" checkable:
@@ -99,9 +108,11 @@ SUBPROCESS to catch it.
 - `recording/camera_profile.py`, `outputs.py`, `action_layout.py`,
   `recording/config.py`, `training/destinations.py` — the five things a rig
   declares. Each refuses until it is told.
-- README.md is the ONE file here that names other repositories: which ones build
-  on this package, how they install it, where each moved area came from.
-  **Nothing else in this repo may name one** -- code, comments, error messages,
+- README.md and `requirements/` are the ONLY places here that name other
+  repositories: which ones build on this package, how they install it, where
+  each moved area came from, and (`requirements/<method>.txt`) the pinned
+  environment each one is smoke-tested against. **Nothing else in this repo may
+  name one** -- code, comments, error messages,
   tests and documents say "a rig" or "a caller". Identifiers that other repos'
   saved artifacts depend on stay as they are: the `so101_*` policy and processor
   registry names (`_port.LEGACY_PREFIX`), the `so101-metric` log sentinel,
@@ -327,4 +338,8 @@ SUBPROCESS to catch it.
   `ACTORIS_HARENA_PATH` and ALSO sets the lowercase `actoris_harena_PATH`,
   because callers' code reads that one; and `train_and_evaluate` exists again
   with its pre-rename signature. It cannot be an alias of
-  `train_and_evaluate_single`, whose fifth parameter is now `eval_last_check`.
+  `train_and_evaluate_single`, whose fifth parameter is now `eval_last_check`,
+  and it hands `agent.train` the ARENA, not `[arena]`. The old call shapes the
+  method repos still make work too: `build_arena("softgym|…")` (a spec string,
+  built through `ArenaBuilder`), `Arena.set_log_dir(logdir)`, and the
+  `agent.utilities.torch_utils` path (a shim, with `OPTIMISER_CLASSES`).

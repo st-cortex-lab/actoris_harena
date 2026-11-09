@@ -16,11 +16,16 @@
 # `import actoris_harena` is lazy precisely so that a venv with only [rig]
 # installed can reach actoris_harena.recording without any of the above.
 
+# The environment built from requirements/sim-py310.txt (README, section 3).
+# Set ACTORIS_HARENA_CONDA_ENV to use another one.
 conda deactivate
-conda activate actoris-harena
+conda activate "${ACTORIS_HARENA_CONDA_ENV:-harena-sim}"
 
 export PYTORCH_JIT=0
 export EGL_GPU=$CUDA_VISIBLE_DEVICES
+# pyflex renders through GLX. Without these it can pick Mesa on a hybrid-GPU
+# laptop or a cluster node and segfault in pyflex.init.
+export __GLX_VENDOR_LIBRARY_NAME=nvidia __NV_PRIME_RENDER_OFFLOAD=1
 
 ### Actoris-Harena
 export ACTORIS_HARENA_PATH=${PWD}/actoris_harena

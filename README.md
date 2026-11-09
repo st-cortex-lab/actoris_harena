@@ -73,16 +73,34 @@ either robot repo).
 Use Linux with a GPU. Running on a CPU is strictly not recommended. It has been
 validated on Ubuntu 20.04, 22.04 and 24.04.
 
+Install from the pinned lock, `requirements/sim-py310.txt`. It is the newest set
+that holds numpy<2, gym 0.26 and Python 3.10 (pyflex is built for cp310), and every
+method repository's smoke run in section 8 passes against exactly these versions:
+
 ```bash
-conda create --name actoris-harena python=3.10
-conda activate actoris-harena
-pip install -e ".[sim,torch]"
-source env_setup.sh        # activates the env and exports the asset paths
+conda create --name harena-sim python=3.10 -y
+conda activate harena-sim
+pip install -r requirements/sim-py310.txt     # or requirements/<method>.txt, below
+pip install -e . --no-deps
 python -c "import actoris_harena, os; print(os.environ['RAVENS_ASSETS_DIR'])"
 ```
 
-`[torch]` alone is what the sim consumers' READMEs and Docker images install.
-Keep using it there.
+`requirements/` holds one file per method repository: `ja-tn.txt`,
+`planet-clothpick.txt`, `lagarnet.txt`, `magpie.txt` (bimanual_garment_folding) and
+`draper.txt`. Each is the lock plus what that repository imports on top. The header
+of `sim-py310.txt` says why each ceiling is where it is: torch 2.12.1, opencv 4.11,
+and open3d 0.18 (newer wheels need glibc 2.31 and will not install on an EL8 cluster).
+
+`pip install -e ".[sim,torch]"` still works: on Python 3.10+ its direct pins are the
+lock's, but only the lock pins every transitive dependency too, so prefer it.
+`[torch]` alone is what older sim consumers' READMEs and Docker images install.
+
+**pyflex needs the NVIDIA driver.** On a hybrid-GPU laptop or a cluster node it
+otherwise falls back to Mesa and segfaults in `pyflex.init`, headless or not:
+
+```bash
+export __GLX_VENDOR_LIBRARY_NAME=nvidia __NV_PRIME_RENDER_OFFLOAD=1
+```
 
 **SoftGym** (skip it if you don't need it): use the lab's modified version.
 
@@ -170,14 +188,13 @@ branch is checked out here is what they run.
 |---|---|---|---|
 | [`so101_garment`](https://github.com/st-cortex-lab/so101_garment) | rig | `hpc/provision_create.sh`: `pip install -e "../actoris_harena[rig]"` | `recording.*`, `training.*`, `analysis.*`, `deploy.*`, `policies.*` (and the `harena_*`/`so101_*` registry names), `web.*`, `sync`, `action_layout` |
 | [`ur3e_raven`](https://github.com/st-cortex-lab/ur3e_raven) | rig + sim | `install.sh`/`install.ps1` from `install.env` (`HARENA_BRANCH=develop`, `[rig]`) | `recording.*`, `training.destinations`, `web.session`, `outputs`, `action_layout`; the Ravens/Transporter code in `agent.bc.transporter.*`, `agent.*`, `arena.*`, `utilities.transform`; and `import actoris_harena` for the `RAVENS_ASSETS_DIR` it sets |
-| `bimanual_garment_folding` | sim | `pip install -e ".[torch]"` on `develop` | the top-level names, `api.*` (incl. `train_and_evaluate`), `utilities.*`, `torch_utils`, `agent.{MPC_CEM,utilities.utils,oracle.builder,drl.sac.*}`, `registration.dataset`; it reads `actoris_harena_PATH` |
+| `bimanual_garment_folding` (MAGPIE) | sim | `requirements/magpie.txt` | the top-level names, `api.*` (incl. `train_and_evaluate`), `utilities.*`, `torch_utils`, `agent.{MPC_CEM,utilities.utils,oracle.builder,drl.sac.*}`, `registration.dataset`; it reads `actoris_harena_PATH` |
 | `learning_garment_manipulation` | sim | Dockerfile: `uv pip install -e ".[torch]"` on `develop` | a subset of the above |
-| [`JA-TN`](https://github.com/st-cortex-lab/JA-TN) | sim | `develop`, then `source env_setup.sh` | `TrainableAgent`, `retrieve_config(config_dir=…)`, `build_*`, `evaluate`, `train_and_evaluate`, `utilities.{trajectory_dataset,networks.utils}`, `arena.raven.tasks` |
-| [`PlaNet-ClothPick`](https://github.com/st-cortex-lab/PlaNet-ClothPick) | sim | `pip install -e ".[torch]"` on `develop` | `Arena`, `Task`, `RLAgent`, `api.*`, `torch_utils`, `registration.dataset`, `agent.*`, `utilities.*` |
+| [`JA-TN`](https://github.com/st-cortex-lab/JA-TN) | sim | `requirements/ja-tn.txt` | `TrainableAgent`, `retrieve_config(config_dir=…)`, `build_*`, `evaluate`, `train_and_evaluate`, `utilities.{trajectory_dataset,networks.utils}`, `arena.raven.tasks` |
+| [`PlaNet-ClothPick`](https://github.com/st-cortex-lab/PlaNet-ClothPick) | sim | `requirements/planet-clothpick.txt` | `Arena`, `Task`, `RLAgent`, `api.*`, `torch_utils`, `registration.dataset`, `agent.*`, `utilities.*` |
+| [`LaGarNet`](https://github.com/st-cortex-lab/LaGarNet) | sim + real | `requirements/lagarnet.txt` | `TrainableAgent`, `api.*` with spec-string arenas, `agent.utilities.torch_utils`, `utilities.{trajectory_dataset,perform_parallel,visual_utils,transform.*,utils}`, `registration.dataset` |
+| [`DRAPER`](https://github.com/st-cortex-lab/DRAPER) | real (ROS 2) | `requirements/draper.txt` | `retrieve_config`, `build_agent`, `utilities.visual_utils` |
 | [`softgym`](https://github.com/st-cortex-lab/softgym) | sim | none (a lazy import) | `agent.oracle.rect_fabric.real2sim_smoothing` |
-
-`LaGarNet` and `DRAPER` still use the old `agent_arena` package
-(`agent-arena-v0`) and do not import this one.
 
 `test/unit/test_consumer_surface.py` lists every `(module, name)` these
 repositories import. It fails if any of them stops resolving. **To move or
@@ -185,7 +202,8 @@ rename something, update the callers first, then that table.** It cannot check
 these other promises:
 
 - **Install names:** the `[rig]`, `[sim]`, `[torch]` and `[realsense]` extras,
-  and the `actoris-harena` script.
+  the `actoris-harena` script, and `requirements/<method>.txt`, which the method
+  repositories' READMEs install from.
 - **Environment:** `import actoris_harena` sets `ACTORIS_HARENA_PATH`,
   `RAVENS_ASSETS_DIR` and `DEFORMABLE_RAVEN_ASSETS_DIR`, plus the lowercase alias
   `actoris_harena_PATH` that callers' code reads.
@@ -195,6 +213,10 @@ these other promises:
   files have `|`, `:` and `()` in their names and cannot be renamed.
 - **Behaviour:**
   - `build_agent` with `config.oracle=True` goes to `OracleBuilder`.
+  - `build_arena("softgym|domain:…")` builds from the spec string through
+    `ArenaBuilder` when the name is not a registered arena, as before c061b3c.
+  - `Arena.set_log_dir(logdir)` works with one argument.
+  - `train_and_evaluate` hands `agent.train` the arena itself, not a list.
   - `train_and_evaluate(agent, arena, validation_interval, total_update_steps,
     eval_checkpoint)` takes a checkpoint as its fifth argument;
     `train_and_evaluate_single` takes a flag there instead.
@@ -211,8 +233,10 @@ these other promises:
 
 - softgym imports `agent.oracle.rect_fabric.real2sim_smoothing`, which exists
   on no branch.
-- bimanual_garment_folding and learning_garment_manipulation still import
-  `agent_arena.api` in `real_robot/test/test_human_policy_folding.py`.
+- learning_garment_manipulation still imports `agent_arena.api` in
+  `real_robot/test/test_human_policy_folding.py`.
+- PyG (`torch-scatter`/`torch-sparse`, only bimanual's VCD baseline) has no wheel
+  that loads on glibc < 2.32, and pyrealsense2 (DRAPER) none for glibc < 2.29.
 
 **Not done yet, deliberately.** Each item moves modules, so each needs a shim at
 every path above:
