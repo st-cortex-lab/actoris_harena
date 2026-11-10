@@ -15,6 +15,14 @@ The shared robot-learning framework of the St CORTEX Lab. Robot repositories
 use it to collect, curate, train and deploy. Research repositories use it to
 run control algorithms on simulated benchmarks.
 
+![Recording on the dual SO-101 rig, then curating and replaying an episode in the console](https://raw.githubusercontent.com/st-cortex-lab/actoris_harena/main/documents/media/rig_collection_console.gif)
+
+*Real-rig data collection and visualisation. First, an episode recorded on the
+dual SO-101 rig, with every camera stream and each joint's follower reading
+beside its command. Then the [console](#4-the-console) browsing a collection
+drive and replaying a UR3e episode: RGB, depth, joint state and command, and
+per-joint velocity and acceleration over the whole episode.*
+
 For ROS 1 Noetic and ROS 2 Humble, see [With ROS](#with-ros) in section 3.
 
 ---
