@@ -15,7 +15,7 @@ The shared robot-learning framework of the St CORTEX Lab. Robot repositories
 use it to collect, curate, train and deploy. Research repositories use it to
 run control algorithms on simulated benchmarks.
 
-**⚠️ For ROS integration, use the ROS branches (`ros1-noetic`, `ros2-humble`).**
+For ROS 1 Noetic and ROS 2 Humble, see [With ROS](#with-ros) in section 3.
 
 ---
 
@@ -110,6 +110,25 @@ export __GLX_VENDOR_LIBRARY_NAME=nvidia __NV_PRIME_RENDER_OFFLOAD=1
 
 **Other benchmarks:** install them as they instruct, and wrap each one in an
 adapter class that implements the `Arena` interface.
+
+### With ROS
+
+ROS is installed from the OS packages, and its Python must match the env:
+
+| ROS | OS | Python | Env |
+|---|---|---|---|
+| ROS 2 Humble | Ubuntu 22.04 | 3.10 | `harena-sim`, from the lock (above) |
+| ROS 1 Noetic | Ubuntu 20.04 | 3.8 | `pip install -e ".[sim,torch]"` in a python=3.8 env, which takes the package's `python_version < '3.10'` pins |
+
+```bash
+conda activate harena-sim            # or the python 3.8 env, for Noetic
+source /opt/ros/humble/setup.bash    # or /opt/ros/noetic/setup.bash
+```
+
+DRAPER's UR3e machine is set up this way, on Humble. The old `ros1-noetic` and
+`ros2-humble` branches used RoboStack conda env files. RoboStack no longer
+builds either distro for Python 3.10, which pyflex needs, so those branches are
+merged and retired.
 
 ## 4. The console
 
