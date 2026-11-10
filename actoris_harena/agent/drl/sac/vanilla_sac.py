@@ -261,12 +261,10 @@ class VanillaSAC(TrainableAgent):
         config = self.config
         context, action, reward, next_context, done = batch.values()
         B = context.shape[0]
-        # print('sampled action', action)
-        # C = self.each_image_shape[0]
-        # N = self.context_horizon
-        # H, W = self.each_image_shape[1:]
-
-        
+        if reward.dim() == 1:
+            reward = reward.unsqueeze(-1)
+        if done.dim() == 1:
+            done = done.unsqueeze(-1)
 
         # alpha loss
         if self.auto_alpha_learning:
@@ -276,6 +274,8 @@ class VanillaSAC(TrainableAgent):
             self.alpha_optim.zero_grad()
             alpha_loss.backward()
             self.alpha_optim.step()
+            with torch.no_grad():
+                self.log_alpha.clamp_(min=-5.0, max=1.0)
         else:
             alpha = self.init_alpha
 
@@ -300,14 +300,21 @@ class VanillaSAC(TrainableAgent):
         self.critic_optim.step()
 
         # actor loss
+        # The actor head returns (mean, std); both are regularised below.
+        mean, std = self.actor(context)
         pi, log_pi = self.actor.sample(context)
         q1_pi, q2_pi = self.critic(context, pi)
         min_q_pi = torch.min(q1_pi, q2_pi)
+        
+        # --- NEW: Add a tiny regularization penalty to the Actor loss ---
         actor_loss = (alpha * log_pi - min_q_pi).mean()
-        #print('\nactor loss', actor_loss.item(), 'alpha', alpha.item())
+        reg_loss = 0.001 * (mean**2).mean() + 0.001 * (std**2).mean()
+        total_actor_loss = actor_loss + reg_loss
+        # ----------------------------------------------------------------
 
         self.actor_optim.zero_grad()
-        actor_loss.backward()
+        total_actor_loss.backward()
+        torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=self.critic_grad_clip_value)
         self.actor_optim.step()
 
         
