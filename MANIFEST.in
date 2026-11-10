@@ -1,0 +1,2 @@
+# Never ship what a local run left behind (see exclude-package-data in pyproject.toml).
+global-exclude __pycache__ *.py[cod]

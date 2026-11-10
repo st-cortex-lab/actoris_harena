@@ -56,8 +56,15 @@ SUBPROCESS to catch it.
 - `make test-unit` / `make test-integration` / `make lint` / `make check-wheel`.
   `lint` runs `test-unit` as its last hook, as in both rigs. `check-wheel` builds
   a REAL wheel and fails unless every tracked file of each data directory is in
-  it (`tool/check_wheel.py`). Every install here is editable, so a gap in
+  it (`tool/check_wheel.py`). Most installs here are editable, so a gap in
   `package-data` is otherwise invisible.
+- **It is on PyPI as `actoris-harena`.** Pushing a tag `vX.Y.Z` (it must equal
+  `v` + pyproject's `version`) runs `.github/workflows/publish.yml`, which
+  builds, runs `check_wheel.py` and a `[rig]` install from the wheel, then
+  uploads to TestPyPI and PyPI by trusted publishing. Guide:
+  `documents/releasing.md`. `license` stays a TOML table, not PEP 639's string:
+  that form needs setuptools>=77, which cannot build on the Python 3.8 (Noetic) path.
+  The README is the PyPI page too, so its images use absolute URLs.
 - The sim side runs in a conda env built from the LOCK, `requirements/sim-py310.txt`
   (`harena-sim`; `source env_setup.sh`), not from a fresh `[sim]` resolve. Its
   header says why each ceiling is where it is (torch 2.12.1 for PyG, opencv 4.11

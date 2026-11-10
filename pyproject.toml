@@ -1,8 +1,26 @@
 [project]
 name = "actoris_harena"
-version = "0.3"
+version = "0.4.0"
 description = "Shared robot-learning pipeline and simulated benchmark arenas."
 requires-python = ">=3.8"
+# A table, not PEP 639's `license = "MIT"`: that form needs setuptools>=77,
+# which no longer runs on Python 3.8, and the ROS 1 Noetic install builds this
+# package from source on 3.8.
+license = { text = "MIT" }
+keywords = ["robot learning", "imitation learning", "reinforcement learning",
+            "benchmark", "lerobot", "softgym", "deformable objects"]
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
 
 authors = [
     { name = "Halid Abdulrahim Kadi", email = "halidkadi.robot@gmail.com" }
@@ -30,6 +48,12 @@ dependencies = [
     "numpy",
     "pyyaml>=6.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/st-cortex-lab/actoris_harena"
+Source = "https://github.com/st-cortex-lab/actoris_harena"
+Issues = "https://github.com/st-cortex-lab/actoris_harena/issues"
+Paper = "https://arxiv.org/abs/2504.06468"
 
 [project.scripts]
 # The shared console and the rig registry. Needs only [rig], so it can be run
@@ -192,7 +216,7 @@ diffskill = [
 ]
 
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
@@ -217,3 +241,7 @@ include = ["actoris_harena*"]
     "arena/raven/environments/assets/**/*",
     "arena/deformable_raven/src/assets/**/*",
 ]
+[tool.setuptools.exclude-package-data]
+# The asset globs above are `**/*`, which would also ship a checkout's
+# __pycache__ -- a built wheel or sdist must not depend on what ran locally.
+"*" = ["__pycache__/*", "*.pyc"]

@@ -9,7 +9,7 @@
 [![DOI](https://zenodo.org/badge/933415395.svg)](https://doi.org/10.5281/zenodo.14876793)
 [![ArXiv](https://img.shields.io/badge/ArXiv-2504.06468-b31b1b.svg)](https://arxiv.org/abs/2504.06468)
 
-![Actoris Harena Plot](assets/agent-arena.jpg)
+![Actoris Harena Plot](https://raw.githubusercontent.com/st-cortex-lab/actoris_harena/main/assets/agent-arena.jpg)
 
 The shared robot-learning framework of the St CORTEX Lab. Robot repositories
 use it to collect, curate, train and deploy. Research repositories use it to
@@ -71,6 +71,13 @@ git clone -b develop https://github.com/st-cortex-lab/actoris_harena.git ../acto
 `ur3e_raven/install.sh` does this for you. Being editable, the robot repo
 imports whatever branch is checked out here.
 
+To use the pipeline without changing it, install the release from PyPI into
+the same venv instead:
+
+```bash
+pip install "actoris-harena[rig]"            # or "actoris-harena[rig,realsense]"
+```
+
 A rig **declares** its facts once, at import: camera profile, recording
 config, training destinations, gripper columns. The package refuses, rather
 than guessing, until it has been told (see `src/common/rig_profile.py` in
@@ -99,8 +106,10 @@ python -c "import actoris_harena, os; print(os.environ['RAVENS_ASSETS_DIR'])"
 of `sim-py310.txt` says why each ceiling is where it is: torch 2.12.1, opencv 4.11,
 and open3d 0.18 (newer wheels need glibc 2.31 and will not install on an EL8 cluster).
 
-`pip install -e ".[sim,torch]"` still works: on Python 3.10+ its direct pins are the
-lock's, but only the lock pins every transitive dependency too, so prefer it.
+Without a clone, `pip install "actoris-harena[sim,torch]"` installs the PyPI
+release; from a clone, `pip install -e ".[sim,torch]"` does the same. On Python
+3.10+ either way's direct pins are the lock's, but only the lock also pins every
+transitive dependency, so prefer it.
 `[torch]` alone is what older sim consumers' READMEs and Docker images install.
 
 **pyflex needs the NVIDIA driver.** On a hybrid-GPU laptop or a cluster node it
