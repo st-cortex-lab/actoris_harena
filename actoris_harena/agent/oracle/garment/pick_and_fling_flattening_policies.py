@@ -16,7 +16,7 @@ class GarmentPickAndFlingExpertPolicy(RandomPolicy):
         super().__init__(**kwargs)
         self.boundary_threshold = kwargs['boundary_threshold'] if 'boundary_threshold' in kwargs else 0.8
         self.camera_height = 1.5
-        self.camera_to_world = #0.4135
+        self.camera_to_world = 0.4135
         self.search_range = 0
         self.search_interval = 0.01
         self.verbose = True
