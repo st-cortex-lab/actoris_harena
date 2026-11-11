@@ -71,9 +71,13 @@ SUBPROCESS to catch it.
   for numpy<2, open3d 0.18 for EL8's glibc 2.28) -- raise one only after the
   method repos' smoke runs pass on both a workstation and Viking. Its checks are
   the hand-run `test/sim/check_*.py`, which nothing collects.
-- **pyflex segfaults in `pyflex.init`** on a hybrid-GPU laptop or a cluster node
-  unless GLX is pointed at NVIDIA (`__GLX_VENDOR_LIBRARY_NAME=nvidia
-  __NV_PRIME_RENDER_OFFLOAD=1`, set by `env_setup.sh`); it is not the Python stack.
+- **pyflex segfaults** (Mesa: `gl_PositionIn undeclared`) unless it renders on
+  the NVIDIA EGL device. Headless it goes through EGL, which ignores the GLX
+  variables, so `EGL_GPU` must name that device. The SoftGym `setup.sh` and
+  `env_setup.sh` set it via `PyFlex/egl_device.py` (the device whose CUDA ordinal
+  is 0, so a Slurm job renders on its own GPU). NOT `$CUDA_VISIBLE_DEVICES`, which
+  holds physical ids. `requirements/smoke/pyflex_check.py` is the check; it is not
+  the Python stack. Also, a softgym spec without `disp:False` opens a WINDOW.
 - **ray >= 2.5x instantiates `@ray.remote` classes**, so an `Arena` subclass that
   leaves an abstract method (`compare`) unimplemented now fails at IMPORT.
 - **The integration tier's checkpoint test SKIPS without a rig's outputs**, and a

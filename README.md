@@ -112,12 +112,21 @@ release; from a clone, `pip install -e ".[sim,torch]"` does the same. On Python
 transitive dependency, so prefer it.
 `[torch]` alone is what older sim consumers' READMEs and Docker images install.
 
-**pyflex needs the NVIDIA driver.** On a hybrid-GPU laptop or a cluster node it
-otherwise falls back to Mesa and segfaults in `pyflex.init`, headless or not:
+**pyflex must render on the NVIDIA GPU.** Headless, it renders through EGL on
+the device `EGL_GPU` names. Without it, EGL picks its default display, which on
+a desktop session (Wayland especially) or a hybrid-GPU laptop is Mesa, and pyflex
+segfaults. The lab's SoftGym `setup.sh` sets `EGL_GPU` to the NVIDIA device of the
+first visible CUDA GPU (`PyFlex/egl_device.py`), and so does `env_setup.sh`. To
+check a machine:
 
 ```bash
-export __GLX_VENDOR_LIBRARY_NAME=nvidia __NV_PRIME_RENDER_OFFLOAD=1
+source requirements/smoke/env.sh .    # or your repo's setup.sh
+python requirements/smoke/pyflex_check.py   # builds a cloth arena, steps it, checks frames
 ```
+
+A pyflex window (`disp:True`) goes through GLX instead, so it also needs
+`__GLX_VENDOR_LIBRARY_NAME=nvidia __NV_PRIME_RENDER_OFFLOAD=1`, which
+`env_setup.sh` also sets.
 
 **SoftGym** (skip it if you don't need it): use the lab's modified version.
 

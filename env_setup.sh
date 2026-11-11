@@ -22,9 +22,20 @@ conda deactivate
 conda activate "${ACTORIS_HARENA_CONDA_ENV:-harena-sim}"
 
 export PYTORCH_JIT=0
-export EGL_GPU=$CUDA_VISIBLE_DEVICES
-# pyflex renders through GLX. Without these it can pick Mesa on a hybrid-GPU
-# laptop or a cluster node and segfault in pyflex.init.
+# Keep ~/.local's packages from shadowing the lock's pins.
+export PYTHONNOUSERSITE=1
+# pyflex renders headless through EGL, on the EGL device EGL_GPU names. Unset,
+# it takes EGL's default display, which on a desktop session (Wayland
+# especially) or a hybrid-GPU laptop is Mesa, and Mesa's shader compiler
+# rejects pyflex's shaders, so it segfaults. The simulator's setup script picks
+# the NVIDIA device of the first visible CUDA GPU (PyFlex/egl_device.py); keep
+# that choice, and run the same probe here if it has not been run. This is NOT
+# $CUDA_VISIBLE_DEVICES: those are physical GPU ids, not EGL device indices.
+if [ -z "${EGL_GPU:-}" ] && [ -f "${PYFLEXROOT:-}/egl_device.py" ]; then
+    _egl_gpu=$(python3 "$PYFLEXROOT/egl_device.py" 2>/dev/null) && export EGL_GPU=$_egl_gpu
+    unset _egl_gpu
+fi
+# A pyflex WINDOW (disp:True) goes through GLX instead; point that at NVIDIA too.
 export __GLX_VENDOR_LIBRARY_NAME=nvidia __NV_PRIME_RENDER_OFFLOAD=1
 
 ### Actoris-Harena

@@ -15,6 +15,10 @@ Each step runs the repository's own script through `smoke_run.py`, which cuts
 evaluation and validation to one episode; `jatn_conf/` and
 `lagarnet_run/configuration/` are the repositories' configs with tiny step counts.
 Every step logs to `<root>/logs/<step>.log` and the run ends with PASS/FAIL per step.
+The first step, `pyflex_render` (`pyflex_check.py`), builds a cloth arena, steps it
+and fails on a blank frame. If it fails, every simulator step after it will too:
+check `EGL_GPU` (README section 3) before anything else. It runs on its own too:
+`source env.sh .; python pyflex_check.py`.
 
 **Point the experiment trees away from real data.** bimanual's and PlaNet's
 `resolve_save_root` pick a root per hostname (on Viking, the live experiment tree

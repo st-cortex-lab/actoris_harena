@@ -25,6 +25,7 @@ A_JATN2='softgym|domain:realadapt-towels,initial:crumpled,action:pixel-pick-and-
 PLANET=sim_exp/lagarnet/planet_clothpick_single_picker_single_primitive_multi_longsleeve_flattening_longsleeve_all_garment
 MAGPIE=sim_exp/magpie/magpie_ctr_align_all_sim_garments_p4_v151_hindsight
 
+step pyflex_render JA-TN $O python $S/pyflex_check.py --out $O/pyflex_render.png
 step imports_ja-tn JA-TN $H/JA-TN python $S/import_check.py ja_tn.adapter ja_tn.transporter actoris_harena.api
 step imports_lagarnet LaGarNet $H/LaGarNet python $S/import_check.py lagarnet.controllers.gc_rssm lagarnet.controllers.planet.rssm lagarnet.utils
 step imports_draper DRAPER $H/DRAPER python $S/draper_check.py $H/DRAPER/interface
